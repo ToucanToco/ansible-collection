@@ -1,0 +1,19 @@
+namespace: toucantoco
+
+name: toucantoco
+
+version: 1.0.0
+
+readme: README.md
+
+authors:
+- ToucanToco Infra <infra@toucantoco.com>
+
+description: ToucanToco custom Ansible collection
+
+license:
+- GPL-2.0-or-later
+
+dependencies: {}
+
+repository: https://github.com/ToucanToco/ansible-collection
