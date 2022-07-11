@@ -16,7 +16,7 @@ toucantoco.toucantoco.betteruptime_monitor | Create & manage betteruptime monito
 ```
 ---
 collections:
-  - name:
+  - name: git@github.com:ToucanToco/ansible-collection.git
   type: git
   version: master
 ```
