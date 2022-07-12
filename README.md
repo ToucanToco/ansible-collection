@@ -22,3 +22,16 @@ collections:
 ```
 
 - Install it with `ansible-galaxy collection install -r requirements.yml`
+
+### Dev
+
+- Run the tests
+ ```
+ make tests
+ ```
+
+### Release
+
+- Update the version of `ansible_collection` by running `make set-version NEW_VERSION=0.4.1`
+- Commit the changes on `master` with a commit message following the syntax: `v0.4.1`
+- The build is automatically triggered by the Jenkins pipeline
