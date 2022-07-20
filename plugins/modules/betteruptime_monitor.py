@@ -11,7 +11,7 @@ MONITOR_FIELDS = {
     "url": {"required": True, "type": "str"},
     "state": {"required": True, "choices": ["present", "absent"], "type": "str"},
     "monitor_type": {
-      "required": True,
+      "required": False,
       "choices": [
         "expected_status_code",
         "imap",
@@ -60,6 +60,7 @@ MONITOR_FIELDS = {
 }
 
 MONITOR_REQUIRED_IF = [
+    ("state", "present", ("monitor_type",)),
     ("monitor_type", "tcp", ("port",)),
     ("monitor_type", "udp", ("port", "required_keyword")),
     ("monitor_type", "expected_status_code", ("expected_status_codes",)),

@@ -16,9 +16,7 @@ toucantoco.toucantoco.betteruptime_monitor | Create & manage betteruptime monito
 ```
 ---
 collections:
-  - name: git@github.com:ToucanToco/ansible-collection.git
-  type: git
-  version: master
+  - name: https://github.com/ToucanToco/ansible-collection/releases/download/v0.1.0/toucantoco-toucantoco-0.1.0.tar.gz
 ```
 
 - Install it with `ansible-galaxy collection install -r requirements.yml`

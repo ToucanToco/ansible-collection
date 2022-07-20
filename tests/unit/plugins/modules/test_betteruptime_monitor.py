@@ -4,46 +4,6 @@ import pytest
 from plugins.modules import betteruptime_monitor
 from ansible.module_utils.common.validation import check_required_if
 
-
-COMMON_ARGS = {
-    "api_key":               "MYAPIKEY",
-    "url":                   "myInstance.toucantoco.guru",
-    "state":                 "present",
-    "monitor_type":          "status",
-    "metadata":              [],
-    "expected_status_codes": "",
-    "request_headers":       {},
-    "domain_expiration":     "",
-    "ssl_expiration":        "",
-    "policy_id":             "",
-    "follow_redirects":      "",
-    "required_keyword":      "",
-    "call":                  False,
-    "sms":                   False,
-    "email":                 True,
-    "push":                  False,
-    "team_wait":             "",
-    "paused":                False,
-    "port":                  "",
-    "regions":               [],
-    "monitor_group_id":      "",
-    "pronounceable_name":    "",
-    "recovery_period":       "",
-    "verify_ssl":            "",
-    "check_frequency":       "",
-    "confirmation_period":   "",
-    "http_method":           "",
-    "request_timeout":       "",
-    "request_body":          "",
-    "auth_username":         "",
-    "auth_password":         "",
-    "maintenance_from":      "",
-    "maintenance_to":        "",
-    "maintenance_timezone":  "",
-    "remember_cookies":      "",
-}
-
-
 @pytest.mark.parametrize("module_args", [
         pytest.param({"monitor_type": "tcp"}, id="TCP without port"),
         pytest.param({"monitor_type": "udp"}, id="UDP without port"),
@@ -57,6 +17,34 @@ def test_validate_require_if(module_args):
     with pytest.raises(TypeError):
         check_required_if(betteruptime_monitor.MONITOR_REQUIRED_IF, module_args)
 
+@pytest.mark.parametrize("payload, expected_payload" , [
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru"},
+            {"url": "www.myinstance.toucantoco.guru"},
+            id="No None fields"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "email": None},
+            {"url": "www.myinstance.toucantoco.guru"},
+            id="One None field"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "email": None, "sms": None},
+            {"url": "www.myinstance.toucantoco.guru"},
+            id="Two None fields"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
+            {"url": "www.myinstance.toucantoco.guru"},
+            id="Empty list"),
+    ]
+)
+@mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
+def test_sanitize_payload(mock_module, payload, expected_payload):
+    monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
+    monitor_object.payload = payload
+    print(monitor_object.payload)
+    monitor_object.sanitize_payload()
+
+    print(monitor_object.payload)
+    assert monitor_object.payload == expected_payload
 
 @pytest.mark.parametrize("searched_url, api_response, expected_nb_call_api, expected_monitor_id" , [
         pytest.param(
