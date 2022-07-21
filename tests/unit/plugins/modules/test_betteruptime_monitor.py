@@ -93,6 +93,38 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_url, api_response,
     assert mock_requests_get.call_count == expected_nb_call_api
     assert monitor_object.id == expected_monitor_id
 
+@pytest.mark.parametrize("api_response, initial_payload, expected_payload" , [
+        pytest.param(
+            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "paused": True, "ssl_expiration": 14}}}],
+            {"url": "www.myinstance.toucantoco.guru", "paused": True},
+            {},
+            id="No new attributes"),
+        pytest.param(
+            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru"}}}],
+            {"url": "www.myinstance.toucantoco.guru", "email": True},
+            {"email": True},
+            id="One new attribute"),
+        pytest.param(
+            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "paused": True}}}],
+            {"url": "www.myinstance.toucantoco.guru", "paused": False},
+            {"paused": False},
+            id="One attribute to update"),
+    ]
+)
+@mock.patch('requests.get')
+@mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
+def test_diff_payload(mock_module, mock_requests_get, api_response, initial_payload, expected_payload):
+    response = mock.Mock()
+    response.json.side_effect = api_response
+    mock_requests_get.return_value = response
+
+    monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
+    monitor_object.payload = initial_payload
+
+    monitor_object.diff_payload()
+
+    assert monitor_object.payload == expected_payload
+
 
 @mock.patch('plugins.modules.betteruptime_monitor.BetterUptimeMonitor.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_monitor.BetterUptimeMonitor.create')

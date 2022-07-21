@@ -100,6 +100,17 @@ class BetterUptimeMonitor:
         if json_object["pagination"]["next"] is not None:
             self.retrieve_id(json_object["pagination"]["next"])
 
+    def diff_payload(self):
+        response = requests.get(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers)
+        json_object = response.json()
+
+        diff_payload = {}
+        for key in self.payload:
+            if not key in json_object["data"]["attributes"] or json_object["data"]["attributes"][key] != self.payload[key]:
+                diff_payload[key] = self.payload[key]
+
+        self.payload = diff_payload
+
     def create(self):
         resp = requests.post(API_MONITORS_BASE_URL, headers=self.headers, json=self.payload)
         if resp.status_code == 201:
@@ -108,7 +119,12 @@ class BetterUptimeMonitor:
             self.module.fail_json(msg=resp.content)
 
     def update(self):
+        self.diff_payload()
+        if not self.payload:
+            self.module.exit_json(changed=False)
+
         resp = requests.patch(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
+
         if resp.status_code == 200:
             self.module.exit_json(changed=True)
         else:
