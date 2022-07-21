@@ -32,18 +32,20 @@ def test_validate_require_if(module_args):
             id="Two None fields"),
         pytest.param(
             {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
-            {"url": "www.myinstance.toucantoco.guru"},
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
             id="Empty list"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "paused": False},
+            {"url": "www.myinstance.toucantoco.guru", "paused": False},
+            id="False boolean"),
     ]
 )
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
 def test_sanitize_payload(mock_module, payload, expected_payload):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
     monitor_object.payload = payload
-    print(monitor_object.payload)
     monitor_object.sanitize_payload()
 
-    print(monitor_object.payload)
     assert monitor_object.payload == expected_payload
 
 @pytest.mark.parametrize("searched_url, api_response, expected_nb_call_api, expected_monitor_id" , [

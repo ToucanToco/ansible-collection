@@ -84,7 +84,7 @@ class BetterUptimeMonitor:
     def sanitize_payload(self):
         sanitized_payload = {}
         for key in self.payload:
-            if self.payload[key]:
+            if self.payload[key] is not None:
                 sanitized_payload[key] = self.payload[key]
         self.payload = sanitized_payload
 
