@@ -109,6 +109,11 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_url, api_response,
             {"url": "www.myinstance.toucantoco.guru", "paused": False},
             {"paused": False},
             id="One attribute to update"),
+        pytest.param(
+            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "requests_headers": []}}}],
+            {"url": "www.myinstance.toucantoco.guru", "requests_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {"requests_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            id="Array"),
     ]
 )
 @mock.patch('requests.get')
