@@ -78,10 +78,12 @@ class BetterUptimeMonitor:
         self.state = self.payload.pop("state")
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
         self.id = None
+        self.retrieved_attributes = None
 
         self.sanitize_payload()
 
     def sanitize_payload(self):
+        """ Remove attributes set to None """
         sanitized_payload = {}
         for key in self.payload:
             if self.payload[key] is not None:
@@ -89,29 +91,36 @@ class BetterUptimeMonitor:
         self.payload = sanitized_payload
 
     def retrieve_id(self, api_url):
+        """ Retrieve the id of a monitor if it exists """
         response = requests.get(api_url, headers=self.headers)
         json_object = response.json()
 
         for item in json_object["data"]:
             if item["attributes"] and item["attributes"]["url"] == self.payload["url"]:
                 self.id = item["id"]
+                self.retrieved_attributes = item["attributes"]
                 return
 
         if json_object["pagination"]["next"] is not None:
             self.retrieve_id(json_object["pagination"]["next"])
 
-    def diff_payload(self):
-        response = requests.get(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers)
-        json_object = response.json()
-
-        diff_payload = {}
+    def diff_attributes(self):
+        """ Update the payload to only have the diff between the wanted and the existed attributes """
+        diff_attributes = {}
         for key in self.payload:
-            if not key in json_object["data"]["attributes"] or json_object["data"]["attributes"][key] != self.payload[key]:
-                diff_payload[key] = self.payload[key]
+            if key == "request_headers":
+                same=all(i in [{"name": j["name"], "value": j["value"]} for j in self.retrieved_attributes[key]] for i in self.payload[key])
+                if not same or len(self.retrieved_attributes[key]) != len(self.payload[key]):
+                    destroyed_headers = [{"id": i["id"] , "_destroy": True} for i in self.retrieved_attributes[key]]
+                    self.payload[key] = self.payload[key] + destroyed_headers
+                    diff_attributes[key] = self.payload[key]
+            elif self.retrieved_attributes[key] != self.payload[key]:
+                diff_attributes[key] = self.payload[key]
 
-        self.payload = diff_payload
+        self.payload = diff_attributes
 
     def create(self):
+        """ Create a new montitor """
         resp = requests.post(API_MONITORS_BASE_URL, headers=self.headers, json=self.payload)
         if resp.status_code == 201:
             self.module.exit_json(changed=True)
@@ -119,7 +128,8 @@ class BetterUptimeMonitor:
             self.module.fail_json(msg=resp.content)
 
     def update(self):
-        self.diff_payload()
+        """ Update an existing montitor """
+        self.diff_attributes()
         if not self.payload:
             self.module.exit_json(changed=False)
 
@@ -131,6 +141,7 @@ class BetterUptimeMonitor:
             self.module.fail_json(msg=resp.content)
 
     def delete(self):
+        """ Delete an existing montitor """
         resp = requests.delete(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers)
         if resp.status_code == 204:
             self.module.exit_json(changed=True)
@@ -138,6 +149,7 @@ class BetterUptimeMonitor:
             self.module.fail_json(msg=resp.content)
 
     def manage_monitor(self):
+        """ Manage state of a montitor """
         self.retrieve_id(API_MONITORS_BASE_URL)
 
         if self.state == "present":

@@ -93,40 +93,51 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_url, api_response,
     assert mock_requests_get.call_count == expected_nb_call_api
     assert monitor_object.id == expected_monitor_id
 
-@pytest.mark.parametrize("api_response, initial_payload, expected_payload" , [
+@pytest.mark.parametrize("retrieved_attributes, initial_payload, expected_payload" , [
         pytest.param(
-            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "paused": True, "ssl_expiration": 14}}}],
+            {"url": "www.myinstance.toucantoco.guru", "paused": True, "ssl_expiration": 14},
             {"url": "www.myinstance.toucantoco.guru", "paused": True},
             {},
             id="No new attributes"),
         pytest.param(
-            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru"}}}],
+            {"url": "www.myinstance.toucantoco.guru", "email": None},
             {"url": "www.myinstance.toucantoco.guru", "email": True},
             {"email": True},
             id="One new attribute"),
         pytest.param(
-            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "paused": True}}}],
+            {"url": "www.myinstance.toucantoco.guru", "paused": True},
             {"url": "www.myinstance.toucantoco.guru", "paused": False},
             {"paused": False},
             id="One attribute to update"),
         pytest.param(
-            [{"data": {"attributes":{"url": "www.myinstance.toucantoco.guru", "requests_headers": []}}}],
-            {"url": "www.myinstance.toucantoco.guru", "requests_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
-            {"requests_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
-            id="Array"),
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {"request_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            id="New request_headers"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"id": 4, "name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {},
+            id="Same request_headers"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"id":5,"name":"User-Agent", "value":"FFEEDDCCBBAA"}]},
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {"request_headers": [{"name": "User-Agent", "value": "AABBCCDDEEFF"}, {"id":5, "_destroy": True}]},
+            id="Changed request_headers"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": [{"id": 6, "name": "User-Agent", "value": "AABBCCDDEEFF"}]},
+            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
+            {"request_headers": [{"id":6, "_destroy": True}]},
+            id="Remove request_headers"),
     ]
 )
-@mock.patch('requests.get')
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
-def test_diff_payload(mock_module, mock_requests_get, api_response, initial_payload, expected_payload):
-    response = mock.Mock()
-    response.json.side_effect = api_response
-    mock_requests_get.return_value = response
-
+def test_diff_attributes(mock_module, retrieved_attributes, initial_payload, expected_payload):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
+    monitor_object.retrieved_attributes = retrieved_attributes
     monitor_object.payload = initial_payload
 
-    monitor_object.diff_payload()
+    monitor_object.diff_attributes()
 
     assert monitor_object.payload == expected_payload
 
