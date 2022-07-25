@@ -47,7 +47,7 @@ pipeline {
                 stage('Build archive') {
                     steps {
                         storeStage()
-                        sh 'make build'
+                        sh 'make docker-build'
                     }
                 }
                 stage('Create release and push archive') {
