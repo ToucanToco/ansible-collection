@@ -84,11 +84,7 @@ class BetterUptimeMonitor:
 
     def sanitize_payload(self):
         """ Remove attributes set to None """
-        sanitized_payload = {}
-        for key in self.payload:
-            if self.payload[key] is not None:
-                sanitized_payload[key] = self.payload[key]
-        self.payload = sanitized_payload
+        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
 
     def retrieve_id(self, api_url):
         """ Retrieve the id of a monitor if it exists """
