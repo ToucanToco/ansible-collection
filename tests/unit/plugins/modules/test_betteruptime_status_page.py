@@ -99,21 +99,59 @@ def test_diff_attributes(mock_module, retrieved_attributes, initial_payload, exp
 
     assert status_page_object.payload == expected_payload
 
+@pytest.mark.parametrize("sections, api_response, expected_create, expected_delete" , [
+        pytest.param(
+            [{"name":"backend"}],
+            [{"data": []}],
+            1, 0,
+            id="Create a new section"),
+        pytest.param(
+            [{"name":"backend"}],
+            [{"data": [{"id":1, "attributes":{"name":"backend", "position":1}}]}],
+            0, 0,
+            id="Section already existing"),
+        pytest.param(
+            [],
+            [{"data": [{"id":1, "attributes":{"name":"backend", "position":1}}]}],
+            0, 1,
+            id="Remove section"),
+    ]
+)
+@mock.patch('requests.get')
+@mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPageSection.delete')
+@mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPageSection.create')
+@mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
+def test_manage_sections(mock_module, mock_betteruptime_page_create, mock_betteruptime_page_delete, mock_requests_get, sections, api_response, expected_create, expected_delete):
+    response = mock.Mock()
+    response.json.side_effect = api_response
+    mock_requests_get.return_value = response
+
+    status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
+    status_page_object.sections = sections
+
+    status_page_object.manage_sections()
+
+    assert mock_betteruptime_page_create.call_count == expected_create
+    assert mock_betteruptime_page_delete.call_count == expected_delete
+
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.create')
+@mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.manage_sections')
 @mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_manage_status_page_create(mock_module, mock_create, mock_retrieve_id):
+def test_manage_status_page_create(mock_module, mock_create, mock_manage_sections, mock_retrieve_id):
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.state = "present"
 
     status_page_object.manage_status_page()
 
     assert mock_create.call_count == 1
+    assert mock_manage_sections.call_count == 1
 
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.update')
+@mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.manage_sections')
 @mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_manage_status_page_update(mock_module, mock_update, mock_retrieve_id):
+def test_manage_status_page_update(mock_module, mock_update, mock_manage_sections, mock_retrieve_id):
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.state = "present"
     status_page_object.id = "1234"
@@ -121,6 +159,7 @@ def test_manage_status_page_update(mock_module, mock_update, mock_retrieve_id):
     status_page_object.manage_status_page()
 
     assert mock_update.call_count == 1
+    assert mock_manage_sections.call_count == 1
 
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.delete')

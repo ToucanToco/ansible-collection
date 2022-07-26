@@ -6,10 +6,16 @@ from ansible.module_utils.basic import AnsibleModule
 
 API_STATUS_PAGES_BASE_URL = "https://betteruptime.com/api/v2/status-pages"
 
+STATUS_PAGES_SECTION_FIELDS = {
+    "name":     {"required": True, "type":  "str"},
+    "position": {"required": False, "type": "int"},
+}
+
 STATUS_PAGES_FIELDS = {
     "api_key":                       {"required": True, "type": "str", "no_log": True},
     "state":                         {"required": True, "type": "str", "choices": ["present", "absent"]},
     "subdomain":                     {"required": True, "type": "str"},
+    "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS },
     "company_name":                  {"required": False, "type": "str", "default": "ToucanToco"},
     "company_url":                   {"required": False, "type": "str", "default": "https://www.toucantoco.com"},
     "contact_url":                   {"required": False, "type": "str"},
@@ -33,14 +39,47 @@ STATUS_PAGES_FIELDS = {
 STATUS_PAGE_IF = [
 ]
 
+class BetterUptimeStatusPageSection:
+    def __init__(self, module, status_page_id, api_key, payload):
+        self.module         = module
+        self.status_page_id = status_page_id
+        self.api_key        = api_key
+        self.payload        = payload
+        self.headers        = {"Authorization": f"Bearer {self.api_key}"}
+        self.id             = None
+
+        self.sanitize_payload()
+
+    def sanitize_payload(self):
+        """ Remove attributes set to None """
+        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
+
+    def create(self):
+        """ Create section """
+        resp = requests.post(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/sections", headers=self.headers, json=self.payload)
+        if resp.status_code == 201:
+            self.id = resp.json()["data"]["id"]
+        else:
+            self.module.fail_json(msg=resp.content)
+
+    def delete(self):
+        """ Delete section """
+        resp = requests.delete(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/sections/{self.id}", headers=self.headers)
+
+        if resp.status_code != 204:
+            self.module.fail_json(msg=resp.content)
 
 class BetterUptimeStatusPage:
     def __init__(self, module):
-        self.module               = module
-        self.payload              = module.params
-        self.api_key              = self.payload.pop("api_key")
-        self.state                = self.payload.pop("state")
-        self.headers              = {"Authorization": f"Bearer {self.api_key}"}
+        self.module  = module
+        self.changed = False
+
+        self.payload  = module.params
+        self.api_key  = self.payload.pop("api_key")
+        self.state    = self.payload.pop("state")
+        self.sections = self.payload.pop("sections")
+        self.headers  = {"Authorization": f"Bearer {self.api_key}"}
+
         self.id                   = None
         self.retrieved_attributes = None
 
@@ -68,31 +107,50 @@ class BetterUptimeStatusPage:
         if json_object["pagination"]["next"] is not None:
             self.retrieve_id(json_object["pagination"]["next"])
 
+    def manage_sections(self):
+        """ Manage section of the Status Page """
+        resp = requests.get(f"{API_STATUS_PAGES_BASE_URL}/{self.id}/sections", headers=self.headers)
+        retrieved_sections = resp.json()["data"]
+
+        for section_payload in self.sections:
+            # Create section if it does not exist
+            if section_payload["name"] not in [i["attributes"]["name"] for i in retrieved_sections]:
+                section = BetterUptimeStatusPageSection(self.module, self.id, self.api_key, section_payload)
+                section.create()
+                self.changed = True
+
+        # Remove section that exists but are not configured
+        for section_to_remove in [i for i in retrieved_sections if i["attributes"]["name"] not in [j["name"] for j in self.sections]]:
+                section = BetterUptimeStatusPageSection(self.module, self.id, self.api_key, section_to_remove)
+                section.id = section_to_remove["id"]
+                section.delete()
+                self.changed = True
+
+
     def create(self):
         """ Create a new status page """
         resp = requests.post(API_STATUS_PAGES_BASE_URL, headers=self.headers, json=self.payload)
         if resp.status_code == 201:
-            self.module.exit_json(changed=True)
+            self.id = resp.json()["data"]["id"]
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
     def update(self):
         """ Update an existing status page """
         self.diff_attributes()
-        if not self.payload:
-            self.module.exit_json(changed=False)
-
-        resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
-        if resp.status_code == 200:
-            self.module.exit_json(changed=True)
-        else:
-            self.module.fail_json(msg=resp.content)
+        if self.payload:
+            resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
+            if resp.status_code == 200:
+                self.changed = True
+            else:
+                self.module.fail_json(msg=resp.content)
 
     def delete(self):
         """ Delete a status page """
         resp = requests.delete(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers)
         if resp.status_code == 204:
-            self.module.exit_json(changed=True)
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
@@ -102,14 +160,20 @@ class BetterUptimeStatusPage:
 
         if self.state == "present":
             if not self.id:
-                res = self.create()
+                self.create()
             else:
-                res = self.update()
+                self.update()
+
+            if self.sections is not None:
+                self.manage_sections()
+
         elif self.state == "absent":
             if not self.id:
                 self.module.exit_json(changed=False, msg="No test to delete with the specified url")
             else:
-                res = self.delete()
+                self.delete()
+
+        self.module.exit_json(changed=self.changed)
 
 def main():
     module = AnsibleModule(
