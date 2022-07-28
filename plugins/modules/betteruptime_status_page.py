@@ -4,8 +4,8 @@ import requests
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_colletions.toucantoco.toucantoco.plugins.module_utils.payload import sanitize_payload
-from ansible_colletions.toucantoco.toucantoco.plugins.module_utils.payload import diff_attributes
+from ..module_utils.payload import sanitize_payload
+from ..module_utils.payload import diff_attributes
 
 API_STATUS_PAGES_BASE_URL = "https://betteruptime.com/api/v2/status-pages"
 API_MONITORS_BASE_URL     = "https://betteruptime.com/api/v2/monitors"
