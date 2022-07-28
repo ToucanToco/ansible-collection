@@ -20,7 +20,7 @@ STATUS_PAGES_RESOURCE_FIELDS = {
 }
 
 STATUS_PAGES_SECTION_FIELDS = {
-    "name":      {"required": True, "type":  "str"},
+    "name":      {"required": False, "type":  "str"},
     "position":  {"required": False, "type": "int"},
     "resources": {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_RESOURCE_FIELDS},
 }
@@ -29,6 +29,7 @@ STATUS_PAGES_FIELDS = {
     "api_key":                       {"required": True, "type": "str", "no_log": True},
     "state":                         {"required": True, "type": "str", "choices": ["present", "absent"]},
     "subdomain":                     {"required": True, "type": "str"},
+    "scope":                         {"required": True, "type": "str"},
     "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS},
     "company_name":                  {"required": False, "type": "str"},
     "company_url":                   {"required": False, "type": "str"},
@@ -162,6 +163,7 @@ class BetterUptimeStatusPage:
         self.payload  = module.params
         self.state    = self.payload.pop("state")
         self.sections = self.payload.pop("sections")
+        self.scope    = self.payload.pop("scope")
         self.headers  = {"Authorization": f"Bearer {self.payload.pop('api_key')}"}
 
         self.id                   = None
@@ -190,8 +192,10 @@ class BetterUptimeStatusPage:
         """ Manage section of the Status Page """
         resp               = requests.get(f"{API_STATUS_PAGES_BASE_URL}/{self.id}/sections", headers=self.headers)
         retrieved_sections = resp.json()["data"]
+        retrieved_sections = [s for s in retrieved_sections if s["attributes"]["name"].startswith(self.scope.capitalize())]
 
         for section_payload in self.sections:
+            section_payload["name"] = ' - '.join(filter(None, [self.scope.capitalize(), section_payload.get("name")]))
             section = BetterUptimeStatusPageSection(self.module, self.id, self.headers, section_payload)
             section.set_id(retrieved_sections)
 
@@ -212,6 +216,7 @@ class BetterUptimeStatusPage:
         """ Manage ressources of the Status Page """
         resp = requests.get(f"{API_STATUS_PAGES_BASE_URL}/{self.id}/resources", headers=self.headers)
         retrieved_resources = resp.json()["data"]
+        retrieved_resources = [r for r in retrieved_resources if r["attributes"]["status_page_section_id"] in [s.id for s in self.sectionList]]
 
         for section in self.sectionList:
             if section.resources is not None:

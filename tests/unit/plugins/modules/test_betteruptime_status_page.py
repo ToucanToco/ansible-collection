@@ -55,20 +55,30 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_subdomain, api_res
 
 @pytest.mark.parametrize("sections, api_response, expected_create, expected_delete" , [
         pytest.param(
-            [{"name":"backend", "resources":None}],
+            [{"name":None, "resources":None}],
             [{"data": []}],
             1, 0,
             id="Create a new section"),
         pytest.param(
-            [{"name":"backend", "resources":None}],
-            [{"data": [{"id":1, "attributes":{"name":"backend", "position":1}}]}],
+            [{"name":None, "resources":None}],
+            [{"data": [{"id":1, "attributes":{"name":"Backend", "position":1}}]}],
             0, 0,
             id="Section already existing"),
         pytest.param(
             [],
-            [{"data": [{"id":1, "attributes":{"name":"backend", "position":1}}]}],
+            [{"data": [{"id":1, "attributes":{"name":"Backend", "position":1}}]}],
             0, 1,
             id="Remove section"),
+        pytest.param(
+            [],
+            [{"data": [{"id":1, "attributes":{"name":"Backend", "position":1}}, {"id":1, "attributes":{"name":"Backend - Other", "position":1}}]}],
+            0, 2,
+            id="Remove multiple sections"),
+        pytest.param(
+            [],
+            [{"data": [{"id":1, "attributes":{"name":"Frontend", "position":1}}]}],
+            0, 0,
+            id="Do not delete sections not related to the scope"),
     ]
 )
 @mock.patch('requests.get')
@@ -82,6 +92,7 @@ def test_manage_sections(mock_module, mock_betteruptime_page_create, mock_better
 
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.sections = sections
+    status_page_object.scope = "backend"
 
     status_page_object.manage_sections()
 
