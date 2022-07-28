@@ -1,4 +1,5 @@
 
+
 def sanitize_payload(payload: dict) -> dict:
     """ Return a dict without None fields """
     return {k:v for (k,v) in payload.items() if v is not None}

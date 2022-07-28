@@ -14,7 +14,6 @@ STATUS_PAGES_RESOURCE_FIELDS = {
     "resource_name": {"required": True, "type": "str"},
     "resource_type": {"required": False, "type": "str", "default": "Monitor"},
     "widget_type":   {"required": False, "type":  "str"},
-    "position":      {"required": False, "type": "str"},
     "public_name":   {"required": False, "type": "str"},
     "explanation":   {"required": False, "type": "str"},
     "position":      {"required": False, "type": "int"},
@@ -23,14 +22,14 @@ STATUS_PAGES_RESOURCE_FIELDS = {
 STATUS_PAGES_SECTION_FIELDS = {
     "name":      {"required": True, "type":  "str"},
     "position":  {"required": False, "type": "int"},
-    "resources": {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_RESOURCE_FIELDS },
+    "resources": {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_RESOURCE_FIELDS},
 }
 
 STATUS_PAGES_FIELDS = {
     "api_key":                       {"required": True, "type": "str", "no_log": True},
     "state":                         {"required": True, "type": "str", "choices": ["present", "absent"]},
     "subdomain":                     {"required": True, "type": "str"},
-    "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS },
+    "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS},
     "company_name":                  {"required": False, "type": "str", "default": "ToucanToco"},
     "company_url":                   {"required": False, "type": "str", "default": "https://www.toucantoco.com"},
     "contact_url":                   {"required": False, "type": "str"},
@@ -51,8 +50,6 @@ STATUS_PAGES_FIELDS = {
     "history":                       {"required": False, "type": "int"},
 }
 
-STATUS_PAGE_IF = [
-]
 
 class BetterUptimeStatusPageResource:
     def __init__(self, module, status_page_id, section_id, headers, payload):
@@ -119,6 +116,7 @@ class BetterUptimeStatusPageResource:
         if resp.status_code != 204:
             self.module.fail_json(msg=resp.content)
 
+
 class BetterUptimeStatusPageSection:
     def __init__(self, module, status_page_id, headers, payload):
         self.module         = module
@@ -154,6 +152,7 @@ class BetterUptimeStatusPageSection:
 
         if resp.status_code != 204:
             self.module.fail_json(msg=resp.content)
+
 
 class BetterUptimeStatusPage:
     def __init__(self, module):
@@ -235,7 +234,6 @@ class BetterUptimeStatusPage:
             resource.delete()
             self.changed = True
 
-
     def create(self):
         """ Create a new status page """
         resp = requests.post(API_STATUS_PAGES_BASE_URL, headers=self.headers, json=self.payload)
@@ -286,11 +284,11 @@ class BetterUptimeStatusPage:
 
         self.module.exit_json(changed=self.changed)
 
+
 def main():
     module = AnsibleModule(
-      argument_spec=STATUS_PAGES_FIELDS,
-      supports_check_mode=True,
-      required_if=STATUS_PAGE_IF
+        argument_spec=STATUS_PAGES_FIELDS,
+        supports_check_mode=True,
     )
 
     status_page_object = BetterUptimeStatusPage(module)
@@ -299,6 +297,7 @@ def main():
         status_page_object.manage_status_page()
     else:
         return module.exit_json(changed=False)
+
 
 if __name__ == "__main__":
     main()
