@@ -4,6 +4,9 @@ import requests
 
 from ansible.module_utils.basic import AnsibleModule
 
+from plugins.module_utils.payload import sanitize_payload
+from plugins.module_utils.payload import diff_attributes
+
 API_STATUS_PAGES_BASE_URL = "https://betteruptime.com/api/v2/status-pages"
 API_MONITORS_BASE_URL     = "https://betteruptime.com/api/v2/monitors"
 
@@ -52,11 +55,11 @@ STATUS_PAGE_IF = [
 ]
 
 class BetterUptimeStatusPageResource:
-    def __init__(self, module, status_page_id, section_id, api_key, payload):
+    def __init__(self, module, status_page_id, section_id, headers, payload):
         self.module = module
 
         self.status_page_id                    = status_page_id
-        self.headers                           = {"Authorization": f"Bearer {api_key}"}
+        self.headers                           = headers
         self.payload                           = payload
         self.payload["status_page_section_id"] = section_id
 
@@ -66,15 +69,7 @@ class BetterUptimeStatusPageResource:
         self.id                   = None
         self.retrieved_attributes = None
 
-        self.sanitize_payload()
-
-    def sanitize_payload(self):
-        """ Remove attributes set to None """
-        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
-
-    def diff_attributes(self):
-        """ Update the payload to only have the diff between the wanted and the existed attributes """
-        self.payload = {k:v for (k,v) in self.payload.items() if (k,v) not in self.retrieved_attributes.items()}
+        self.payload = sanitize_payload(self.payload)
 
     def retrieve_monitor_id(self, api_url):
         """ Retrieve the id of a monitor if it exists """
@@ -108,7 +103,7 @@ class BetterUptimeStatusPageResource:
 
     def update(self):
         """ Update an existing resource """
-        self.diff_attributes()
+        self.payload = diff_attributes(self.payload, self.retrieved_attributes)
         if self.payload:
             resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/resources/{self.id}", headers=self.headers, json=self.payload)
             if resp.status_code == 200:
@@ -125,26 +120,19 @@ class BetterUptimeStatusPageResource:
             self.module.fail_json(msg=resp.content)
 
 class BetterUptimeStatusPageSection:
-    def __init__(self, module, status_page_id, api_key, payload):
+    def __init__(self, module, status_page_id, headers, payload):
         self.module         = module
+        self.headers        = headers
         self.status_page_id = status_page_id
-        self.api_key        = api_key
         self.payload        = payload
-        self.headers        = {"Authorization": f"Bearer {self.api_key}"}
         self.id             = None
-
-        self.resourceList = []
 
         if "resources" in self.payload:
             self.resources = self.payload.pop("resources")
         else:
             self.resources = None
 
-        self.sanitize_payload()
-
-    def sanitize_payload(self):
-        """ Remove attributes set to None """
-        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
+        self.payload = sanitize_payload(self.payload)
 
     def set_id(self, retrieved_sections):
         """ Set the id if found in retrieved sections"""
@@ -173,10 +161,9 @@ class BetterUptimeStatusPage:
         self.changed = False
 
         self.payload  = module.params
-        self.api_key  = self.payload.pop("api_key")
         self.state    = self.payload.pop("state")
         self.sections = self.payload.pop("sections")
-        self.headers  = {"Authorization": f"Bearer {self.api_key}"}
+        self.headers  = {"Authorization": f"Bearer {self.payload.pop('api_key')}"}
 
         self.id                   = None
         self.retrieved_attributes = None
@@ -184,15 +171,7 @@ class BetterUptimeStatusPage:
         self.sectionList  = []
         self.resourceList = []
 
-        self.sanitize_payload()
-
-    def sanitize_payload(self):
-        """ Remove attributes set to None """
-        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
-
-    def diff_attributes(self):
-        """ Update the payload to only have the diff between the wanted and the existed attributes """
-        self.payload = {k:v for (k,v) in self.payload.items() if (k,v) not in self.retrieved_attributes.items()}
+        self.payload = sanitize_payload(self.payload)
 
     def retrieve_id(self, api_url):
         """ Retrieve the id of a status page if it exists """
@@ -214,7 +193,7 @@ class BetterUptimeStatusPage:
         retrieved_sections = resp.json()["data"]
 
         for section_payload in self.sections:
-            section = BetterUptimeStatusPageSection(self.module, self.id, self.api_key, section_payload)
+            section = BetterUptimeStatusPageSection(self.module, self.id, self.headers, section_payload)
             section.set_id(retrieved_sections)
 
             self.sectionList.append(section)
@@ -225,7 +204,7 @@ class BetterUptimeStatusPage:
 
         # Remove section that exists but are not configured
         for section_to_remove in [i for i in retrieved_sections if int(i["id"]) not in [j.id for j in self.sectionList]]:
-            section = BetterUptimeStatusPageSection(self.module, self.id, self.api_key, section_to_remove)
+            section = BetterUptimeStatusPageSection(self.module, self.id, self.headers, section_to_remove)
             section.id = section_to_remove["id"]
             section.delete()
             self.changed = True
@@ -238,7 +217,7 @@ class BetterUptimeStatusPage:
         for section in self.sectionList:
             if section.resources is not None:
                 for resource_payload in section.resources:
-                    resource = BetterUptimeStatusPageResource(self.module, self.id, section.id, self.api_key, resource_payload)
+                    resource = BetterUptimeStatusPageResource(self.module, self.id, section.id, self.headers, resource_payload)
                     resource.retrieve_monitor_id(API_MONITORS_BASE_URL)
                     resource.set_id(retrieved_resources)
                     self.resourceList.append(resource)
@@ -251,7 +230,7 @@ class BetterUptimeStatusPage:
 
         # Remove resource that exists but are not configured
         for resource_to_remove in [i for i in retrieved_resources if int(i["id"]) not in [j.id for j in self.resourceList]]:
-            resource = BetterUptimeStatusPageResource(self.module, self.id, 0, self.api_key, resource_to_remove)
+            resource = BetterUptimeStatusPageResource(self.module, self.id, 0, self.headers, resource_to_remove)
             resource.id = resource_to_remove["id"]
             resource.delete()
             self.changed = True
@@ -268,7 +247,8 @@ class BetterUptimeStatusPage:
 
     def update(self):
         """ Update an existing status page """
-        self.diff_attributes()
+        self.payload = diff_attributes(self.payload, self.retrieved_attributes)
+
         if self.payload:
             resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
             if resp.status_code == 200:

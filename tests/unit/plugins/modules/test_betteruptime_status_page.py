@@ -8,24 +8,6 @@ from ansible.module_utils.common.validation import check_required_if
 COMMON_ARGS = {
 }
 
-@pytest.mark.parametrize("payload, expected_payload" , [
-        pytest.param(
-            {"subdomain": "tesst"},
-            {"subdomain": "tesst"},
-            id="No None fields"),
-        pytest.param(
-            {"subdomain": "tesst", "logo_url": None},
-            {"subdomain": "tesst"},
-            id="One None field"),
-        ]
-)
-@mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_sanitize_payload(mock_module, payload, expected_payload):
-    status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
-    status_page_object.payload = payload
-    status_page_object.sanitize_payload()
-    assert status_page_object.payload == expected_payload
-
 @pytest.mark.parametrize("searched_subdomain, api_response, expected_nb_call_api, expected_status_page_id" , [
         pytest.param(
             "myinstance-toucantoco",
@@ -70,34 +52,6 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_subdomain, api_res
 
     assert mock_requests_get.call_count == expected_nb_call_api
     assert status_page_object.id == expected_status_page_id
-
-@pytest.mark.parametrize("retrieved_attributes, initial_payload, expected_payload" , [
-        pytest.param(
-            {"subdomain": "tesst", "company_name": "ToucanToco"},
-            {"subdomain": "tesst", "company_name": "ToucanToco"},
-            {},
-            id="No new attributes"),
-        pytest.param(
-            {"subdomain": "tesst", "company_name": "ToucanToco", "logo_url": None},
-            {"subdomain": "tesst", "company_name": "ToucanToco", "logo_url": "http://MySuperLogo.png"},
-            {"logo_url": "http://MySuperLogo.png"},
-            id="One new attribute"),
-        pytest.param(
-            {"subdomain": "tesst", "company_name": "ToucanToco"},
-            {"subdomain": "tesst", "company_name": "NewCompany"},
-            {"company_name": "NewCompany"},
-            id="One attribute to update"),
-    ]
-)
-@mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_diff_attributes(mock_module, retrieved_attributes, initial_payload, expected_payload):
-    status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
-    status_page_object.retrieved_attributes = retrieved_attributes
-    status_page_object.payload = initial_payload
-
-    status_page_object.diff_attributes()
-
-    assert status_page_object.payload == expected_payload
 
 @pytest.mark.parametrize("sections, api_response, expected_create, expected_delete" , [
         pytest.param(
