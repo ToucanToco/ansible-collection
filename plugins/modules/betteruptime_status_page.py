@@ -4,17 +4,17 @@ import requests
 
 from ansible.module_utils.basic import AnsibleModule
 
-from plugins.module_utils.payload import sanitize_payload
-from plugins.module_utils.payload import diff_attributes
+from ansible_colletions.toucantoco.toucantoco.plugins.module_utils.payload import sanitize_payload
+from ansible_colletions.toucantoco.toucantoco.plugins.module_utils.payload import diff_attributes
 
 API_STATUS_PAGES_BASE_URL = "https://betteruptime.com/api/v2/status-pages"
 API_MONITORS_BASE_URL     = "https://betteruptime.com/api/v2/monitors"
 
 STATUS_PAGES_RESOURCE_FIELDS = {
     "resource_name": {"required": True, "type": "str"},
+    "public_name":   {"required": True, "type": "str"},
     "resource_type": {"required": False, "type": "str", "default": "Monitor"},
     "widget_type":   {"required": False, "type":  "str"},
-    "public_name":   {"required": False, "type": "str"},
     "explanation":   {"required": False, "type": "str"},
     "position":      {"required": False, "type": "int"},
 }
@@ -30,11 +30,11 @@ STATUS_PAGES_FIELDS = {
     "state":                         {"required": True, "type": "str", "choices": ["present", "absent"]},
     "subdomain":                     {"required": True, "type": "str"},
     "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS},
-    "company_name":                  {"required": False, "type": "str", "default": "ToucanToco"},
-    "company_url":                   {"required": False, "type": "str", "default": "https://www.toucantoco.com"},
+    "company_name":                  {"required": False, "type": "str"},
+    "company_url":                   {"required": False, "type": "str"},
     "contact_url":                   {"required": False, "type": "str"},
     "logo_url":                      {"required": False, "type": "str"},
-    "timezone":                      {"required": False, "type": "str", "default": "Paris"},
+    "timezone":                      {"required": False, "type": "str"},
     "custom_domain":                 {"required": False, "type": "str"},
     "custom_css":                    {"required": False, "type": "str"},
     "google_analytics_id":           {"required": False, "type": "str"},
