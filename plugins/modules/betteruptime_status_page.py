@@ -3,6 +3,7 @@
 import requests
 
 from ansible.module_utils.basic import AnsibleModule
+from http import HTTPStatus
 
 from ..module_utils.payload import sanitize_payload
 from ..module_utils.payload import diff_attributes
@@ -94,7 +95,7 @@ class BetterUptimeStatusPageResource:
     def create(self):
         """ Create resource """
         resp = requests.post(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/resources", headers=self.headers, json=self.payload)
-        if resp.status_code == 201:
+        if resp.status_code == HTTPStatus.CREATED:
             self.id = resp.json()["data"]["id"]
         else:
             self.module.fail_json(msg=resp.content)
@@ -104,7 +105,7 @@ class BetterUptimeStatusPageResource:
         self.payload = diff_attributes(self.payload, self.retrieved_attributes)
         if self.payload:
             resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/resources/{self.id}", headers=self.headers, json=self.payload)
-            if resp.status_code == 200:
+            if resp.status_code == HTTPStatus.OK:
                 return True
             else:
                 self.module.fail_json(msg=resp.content)
@@ -114,7 +115,7 @@ class BetterUptimeStatusPageResource:
         """ Delete a resource """
         resp = requests.delete(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/resources/{self.id}", headers=self.headers)
 
-        if resp.status_code != 204:
+        if resp.status_code != HTTPStatus.NO_CONTENT:
             self.module.fail_json(msg=resp.content)
 
 
@@ -126,6 +127,7 @@ class BetterUptimeStatusPageSection:
         self.payload        = payload
         self.id             = None
 
+        # Poping resources from the payload for later resources creation
         if "resources" in self.payload:
             self.resources = self.payload.pop("resources")
         else:
@@ -283,7 +285,7 @@ class BetterUptimeStatusPage:
 
         elif self.state == "absent":
             if not self.id:
-                self.module.exit_json(changed=False, msg="No test to delete with the specified url")
+                self.module.exit_json(changed=False, msg="No status page to delete with the specified domain")
             else:
                 self.delete()
 
