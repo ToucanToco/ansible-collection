@@ -3,16 +3,17 @@
 import requests
 
 from ansible.module_utils.basic import AnsibleModule
+from http import HTTPStatus
 
 API_MONITORS_BASE_URL = "https://betteruptime.com/api/v2/monitors"
 
 MONITOR_FIELDS = {
-    "api_key": {"required": True, "type": "str", "no_log": True},
-    "url": {"required": True, "type": "str"},
-    "state": {"required": True, "choices": ["present", "absent"], "type": "str"},
-    "monitor_type": {
-      "required": False,
-      "choices": [
+    "api_key":               {"required": True, "type": "str", "no_log": True},
+    "url":                   {"required": True, "type": "str"},
+    "state":                 {"required": True, "choices": ["present", "absent"], "type": "str"},
+    "monitor_type":          {
+      "required":            False,
+      "choices":             [
         "expected_status_code",
         "imap",
         "keyword",
@@ -24,39 +25,39 @@ MONITOR_FIELDS = {
         "tcp",
         "udp",
       ],
-      "type": "str"
+      "type":                "str"
     },
-    "metadata": {"required": False, "type": "list", "elements": "dict"},
+    "metadata":              {"required": False, "type": "list", "elements": "dict"},
     "expected_status_codes": {"required": False, "type": "list", "elements": "int"},
-    "request_headers": {"required": False, "type": "list", "elements": "dict"},
-    "domain_expiration": {"required": False, "type": "int"},
-    "ssl_expiration": {"required": False, "type": "int"},
-    "policy_id": {"required": False, "type": "str"},
-    "follow_redirects": {"required": False, "type": "bool"},
-    "required_keyword": {"required": False, "type": "str"},
-    "call": {"required": False, "type": "bool", "default": False},
-    "sms": {"required": False, "type": "bool", "default": False},
-    "email": {"required": False, "type": "bool", "default": True},
-    "push": {"required": False, "type": "bool", "default": False},
-    "team_wait": {"required": False, "type": "int"},
-    "paused": {"required": False, "type": "bool", "default": False},
-    "port": {"required": False, "type": "str"},
-    "regions": {"required": False, "type": "list", "elements": "str"},
-    "monitor_group_id": {"required": False, "type": "str"},
-    "pronounceable_name": {"required": False, "type": "str"},
-    "recovery_period": {"required": False, "type": "int"},
-    "verify_ssl": {"required": False, "type": "bool"},
-    "check_frequency": {"required": False, "type": "int", "default": 300},
-    "confirmation_period": {"required": False, "type": "int", "default": 120},
-    "http_method": {"required": False, "type": "str"},
-    "request_timeout": {"required": False, "type": "int"},
-    "request_body": {"required": False, "type": "str"},
-    "auth_username": {"required": False, "type": "str"},
-    "auth_password": {"required": False, "type": "str"},
-    "maintenance_from": {"required": False, "type": "str"},
-    "maintenance_to": {"required": False, "type": "str"},
-    "maintenance_timezone": {"required": False, "type": "str"},
-    "remember_cookies": {"required": False, "type": "bool"},
+    "request_headers":       {"required": False, "type": "list", "elements": "dict"},
+    "domain_expiration":     {"required": False, "type": "int"},
+    "ssl_expiration":        {"required": False, "type": "int"},
+    "policy_id":             {"required": False, "type": "str"},
+    "follow_redirects":      {"required": False, "type": "bool"},
+    "required_keyword":      {"required": False, "type": "str"},
+    "call":                  {"required": False, "type": "bool", "default": False},
+    "sms":                   {"required": False, "type": "bool", "default": False},
+    "email":                 {"required": False, "type": "bool", "default": True},
+    "push":                  {"required": False, "type": "bool", "default": False},
+    "team_wait":             {"required": False, "type": "int"},
+    "paused":                {"required": False, "type": "bool", "default": False},
+    "port":                  {"required": False, "type": "str"},
+    "regions":               {"required": False, "type": "list", "elements": "str"},
+    "monitor_group_id":      {"required": False, "type": "str"},
+    "pronounceable_name":    {"required": False, "type": "str"},
+    "recovery_period":       {"required": False, "type": "int"},
+    "verify_ssl":            {"required": False, "type": "bool"},
+    "check_frequency":       {"required": False, "type": "int", "default": 300},
+    "confirmation_period":   {"required": False, "type": "int", "default": 120},
+    "http_method":           {"required": False, "type": "str"},
+    "request_timeout":       {"required": False, "type": "int"},
+    "request_body":          {"required": False, "type": "str"},
+    "auth_username":         {"required": False, "type": "str"},
+    "auth_password":         {"required": False, "type": "str"},
+    "maintenance_from":      {"required": False, "type": "str"},
+    "maintenance_to":        {"required": False, "type": "str"},
+    "maintenance_timezone":  {"required": False, "type": "str"},
+    "remember_cookies":      {"required": False, "type": "bool"},
 }
 
 MONITOR_REQUIRED_IF = [
@@ -118,7 +119,7 @@ class BetterUptimeMonitor:
     def create(self):
         """ Create a new montitor """
         resp = requests.post(API_MONITORS_BASE_URL, headers=self.headers, json=self.payload)
-        if resp.status_code == 201:
+        if resp.status_code == HTTPStatus.CREATED :
             self.module.exit_json(changed=True)
         else:
             self.module.fail_json(msg=resp.content)
@@ -131,7 +132,7 @@ class BetterUptimeMonitor:
 
         resp = requests.patch(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
 
-        if resp.status_code == 200:
+        if resp.status_code == HTTPStatus.OK:
             self.module.exit_json(changed=True)
         else:
             self.module.fail_json(msg=resp.content)
@@ -139,7 +140,7 @@ class BetterUptimeMonitor:
     def delete(self):
         """ Delete an existing montitor """
         resp = requests.delete(f"{API_MONITORS_BASE_URL}/{self.id}", headers=self.headers)
-        if resp.status_code == 204:
+        if resp.status_code == HTTPStatus.NO_CONTENT:
             self.module.exit_json(changed=True)
         else:
             self.module.fail_json(msg=resp.content)
