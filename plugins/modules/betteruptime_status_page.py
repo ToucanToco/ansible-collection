@@ -144,7 +144,7 @@ class BetterUptimeStatusPageSection:
     def create(self):
         """ Create section """
         resp = requests.post(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/sections", headers=self.headers, json=self.payload)
-        if resp.status_code == 201:
+        if resp.status_code == HTTPStatus.CREATED:
             self.id = resp.json()["data"]["id"]
         else:
             self.module.fail_json(msg=resp.content)
@@ -153,7 +153,7 @@ class BetterUptimeStatusPageSection:
         """ Delete section """
         resp = requests.delete(f"{API_STATUS_PAGES_BASE_URL}/{self.status_page_id}/sections/{self.id}", headers=self.headers)
 
-        if resp.status_code != 204:
+        if resp.status_code != HTTPStatus.NO_CONTENT:
             self.module.fail_json(msg=resp.content)
 
 
@@ -244,7 +244,7 @@ class BetterUptimeStatusPage:
     def create(self):
         """ Create a new status page """
         resp = requests.post(API_STATUS_PAGES_BASE_URL, headers=self.headers, json=self.payload)
-        if resp.status_code == 201:
+        if resp.status_code == HTTPStatus.CREATED:
             self.id = resp.json()["data"]["id"]
             self.changed = True
         else:
@@ -256,7 +256,7 @@ class BetterUptimeStatusPage:
 
         if self.payload:
             resp = requests.patch(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers, json=self.payload)
-            if resp.status_code == 200:
+            if resp.status_code == HTTPStatus.OK:
                 self.changed = True
             else:
                 self.module.fail_json(msg=resp.content)
@@ -264,7 +264,7 @@ class BetterUptimeStatusPage:
     def delete(self):
         """ Delete a status page """
         resp = requests.delete(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers)
-        if resp.status_code == 204:
+        if resp.status_code == HTTPStatus.NO_CONTENT:
             self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
