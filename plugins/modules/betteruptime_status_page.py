@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import requests
+import urllib
 
 from ansible.module_utils.basic import AnsibleModule
 from http import HTTPStatus
@@ -72,7 +73,7 @@ class BetterUptimeStatusPageResource:
 
     def retrieve_monitor_id(self, api_url):
         """ Retrieve the id of a monitor if it exists """
-        response = requests.get(api_url, headers=self.headers)
+        response = requests.get(f"{api_url}?url={urllib.parse.quote(self.resource_name)}", headers=self.headers)
         json_object = response.json()
 
         for item in json_object["data"]:

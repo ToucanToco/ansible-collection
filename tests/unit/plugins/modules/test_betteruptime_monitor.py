@@ -17,36 +17,6 @@ def test_validate_require_if(module_args):
     with pytest.raises(TypeError):
         check_required_if(betteruptime_monitor.MONITOR_REQUIRED_IF, module_args)
 
-@pytest.mark.parametrize("payload, expected_payload" , [
-        pytest.param(
-            {"url": "www.myinstance.toucantoco.guru"},
-            {"url": "www.myinstance.toucantoco.guru"},
-            id="No None fields"),
-        pytest.param(
-            {"url": "www.myinstance.toucantoco.guru", "email": None},
-            {"url": "www.myinstance.toucantoco.guru"},
-            id="One None field"),
-        pytest.param(
-            {"url": "www.myinstance.toucantoco.guru", "email": None, "sms": None},
-            {"url": "www.myinstance.toucantoco.guru"},
-            id="Two None fields"),
-        pytest.param(
-            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
-            {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
-            id="Empty list"),
-        pytest.param(
-            {"url": "www.myinstance.toucantoco.guru", "paused": False},
-            {"url": "www.myinstance.toucantoco.guru", "paused": False},
-            id="False boolean"),
-    ]
-)
-@mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
-def test_sanitize_payload(mock_module, payload, expected_payload):
-    monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
-    monitor_object.payload = payload
-    monitor_object.sanitize_payload()
-
-    assert monitor_object.payload == expected_payload
 
 @pytest.mark.parametrize("searched_url, api_response, expected_nb_call_api, expected_monitor_id" , [
         pytest.param(
@@ -147,7 +117,8 @@ def test_diff_attributes(mock_module, retrieved_attributes, initial_payload, exp
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
 def test_manage_monitor_create(mock_module, mock_create, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
-    monitor_object.state = "present"
+    monitor_object.state          = "present"
+    monitor_object.payload["url"] = "https://myurlToMonitor.com"
 
     monitor_object.manage_monitor()
 
@@ -158,8 +129,9 @@ def test_manage_monitor_create(mock_module, mock_create, mock_retrieve_id):
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
 def test_manage_monitor_update(mock_module, mock_update, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
-    monitor_object.state = "present"
-    monitor_object.id = "1234"
+    monitor_object.state          = "present"
+    monitor_object.payload["url"] = "https://myurlToMonitor.com"
+    monitor_object.id             = "1234"
 
     monitor_object.manage_monitor()
 
@@ -170,8 +142,9 @@ def test_manage_monitor_update(mock_module, mock_update, mock_retrieve_id):
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
 def test_manage_monitor_delete(mock_module, mock_delete, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
-    monitor_object.state = "absent"
-    monitor_object.id = "1234"
+    monitor_object.state          = "absent"
+    monitor_object.payload["url"] = "https://myurlToMonitor.com"
+    monitor_object.id             = "1234"
 
     monitor_object.manage_monitor()
 

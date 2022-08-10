@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
 import requests
+import urllib
 
 from ansible.module_utils.basic import AnsibleModule
 from http import HTTPStatus
+
+from ..module_utils.payload import sanitize_payload
 
 API_MONITORS_BASE_URL = "https://betteruptime.com/api/v2/monitors"
 
@@ -81,11 +84,7 @@ class BetterUptimeMonitor:
         self.id = None
         self.retrieved_attributes = None
 
-        self.sanitize_payload()
-
-    def sanitize_payload(self):
-        """ Remove attributes set to None """
-        self.payload = {k:v for (k,v) in self.payload.items() if v is not None}
+        self.payload = sanitize_payload(self.payload)
 
     def retrieve_id(self, api_url):
         """ Retrieve the id of a monitor if it exists """
@@ -147,7 +146,7 @@ class BetterUptimeMonitor:
 
     def manage_monitor(self):
         """ Manage state of a montitor """
-        self.retrieve_id(API_MONITORS_BASE_URL)
+        self.retrieve_id(f"{API_MONITORS_BASE_URL}?url={urllib.parse.quote(self.payload['url'])}")
 
         if self.state == "present":
             if not self.id:
