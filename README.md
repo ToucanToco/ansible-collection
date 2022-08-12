@@ -6,9 +6,11 @@ This Ansible collection includes a variety of Ansible content to help automate t
 
 ### Modules
 
-Name | Description
---- | ---
-toucantoco.toucantoco.betteruptime_monitor | Create & manage betteruptime monitors
+| Name                                                   | Description                                      |
+|--------------------------------------------------------|--------------------------------------------------|
+| toucantoco.toucantoco.betteruptime_monitor             | Create & manage betteruptime monitors            |
+| toucantoco.toucantoco.betteruptime_status_page         | Create & manage betteruptime status pages        |
+| toucantoco.toucantoco.betteruptime_status_page_report  | Create & manage betteruptime status page reports |
 
 ### Installing this collection
 
