@@ -99,6 +99,11 @@ def test_retrieve_id(mock_module, mock_requests_get, searched_url, api_response,
             {"url": "www.myinstance.toucantoco.guru", "request_headers": []},
             {"request_headers": [{"id":6, "_destroy": True}]},
             id="Remove request_headers"),
+        pytest.param(
+            {"url": "www.myinstance.toucantoco.guru", "confirmation_period": 60},
+            {"url": "www.myinstance.toucantoco.guru", "auth_password": "myPass", "confirmation_period": 120},
+            {"confirmation_period": 120, "auth_password": "myPass"},
+            id="Attribute not returned by the API"),
     ]
 )
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')

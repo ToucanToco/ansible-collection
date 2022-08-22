@@ -110,7 +110,7 @@ class BetterUptimeMonitor:
                     destroyed_headers = [{"id": i["id"] , "_destroy": True} for i in self.retrieved_attributes[key]]
                     self.payload[key] = self.payload[key] + destroyed_headers
                     diff_attributes[key] = self.payload[key]
-            elif self.retrieved_attributes[key] != self.payload[key]:
+            elif key not in self.retrieved_attributes or self.retrieved_attributes[key] != self.payload[key]:
                 diff_attributes[key] = self.payload[key]
 
         self.payload = diff_attributes
