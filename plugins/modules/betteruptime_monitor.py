@@ -56,7 +56,7 @@ MONITOR_FIELDS = {
     "request_timeout":       {"required": False, "type": "int"},
     "request_body":          {"required": False, "type": "str"},
     "auth_username":         {"required": False, "type": "str"},
-    "auth_password":         {"required": False, "type": "str"},
+    "auth_password":         {"required": False, "type": "str", "no_log": True},
     "maintenance_from":      {"required": False, "type": "str"},
     "maintenance_to":        {"required": False, "type": "str"},
     "maintenance_timezone":  {"required": False, "type": "str"},
