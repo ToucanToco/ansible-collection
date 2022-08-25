@@ -93,9 +93,11 @@ class BetterUptimeMonitor:
 
         for item in json_object["data"]:
             if item["attributes"] and item["attributes"]["url"] == self.payload["url"]:
-                self.id = item["id"]
-                self.retrieved_attributes = item["attributes"]
-                return
+                if  ("port" not in self.payload and "port" not in item["attributes"]) or\
+                    ("port" in self.payload and "port" in item["attributes"] and item["attributes"]["port"] == self.payload["port"]):
+                    self.id = item["id"]
+                    self.retrieved_attributes = item["attributes"]
+                    return
 
         if json_object["pagination"]["next"] is not None:
             self.retrieve_id(json_object["pagination"]["next"])
