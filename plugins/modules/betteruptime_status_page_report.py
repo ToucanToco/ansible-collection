@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus
 import requests
 
@@ -128,7 +128,8 @@ class BetterUptimeStatusPageReport:
 
         for item in json_object["data"]:
             dt_payload = datetime.strptime(self.payload["starts_at"], '%Y-%m-%dT%H:%M%z')
-            dt_retrieved = datetime.strptime(item["attributes"]["starts_at"], '%Y-%m-%dT%H:%M:%S.%fZ')
+            dt_retrieved = datetime.strptime(item["attributes"]["starts_at"], '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
+
             if item["attributes"] and \
                     item["attributes"]["title"] == self.payload["title"] and \
                     item["attributes"]["report_type"] == self.payload["report_type"] and \
