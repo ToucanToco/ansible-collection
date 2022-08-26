@@ -18,19 +18,19 @@ def test_validate_require_if(module_args):
         check_required_if(betteruptime_monitor.MONITOR_REQUIRED_IF, module_args)
 
 
-@pytest.mark.parametrize("searched_url, api_response, expected_nb_call_api, expected_monitor_id" , [
+@pytest.mark.parametrize("params, api_response, expected_nb_call_api, expected_monitor_id" , [
         pytest.param(
-            "http://api-toto.toucantoco.guru",
+            {"url": "http://api-toto.toucantoco.guru"},
             [{"data": [], "pagination": {"next": None}}],
             1, None,
             id="Monitor not found"),
         pytest.param(
-            "http://api-toto.toucantoco.guru",
+            {"url": "http://api-toto.toucantoco.guru"},
             [{"data": [{"id": "1", "attributes": {"url": "http://api-toto.toucantoco.guru"}}], "pagination": {"next": None}}],
             1, "1",
             id="Monitor found - 1 page"),
         pytest.param(
-            "http://api-toto.toucantoco.guru",
+            {"url":"http://api-toto.toucantoco.guru"},
             [
                 {"data": [{"id": "1", "attributes": {"url": "http://not-api-toto.toucantoco.guru"}}], "pagination": {"next": "https://betteruptime.com/api/v2/monitors?page=2" }},
                 {"data": [{"id": "1", "attributes": {"url": "http://api-toto.toucantoco.guru"}}], "pagination": {"next": None}}
@@ -38,7 +38,7 @@ def test_validate_require_if(module_args):
             2, "1",
             id="Monitor found - 2 pages"),
         pytest.param(
-            "http://api-toto.toucantoco.guru",
+            {"url": "http://api-toto.toucantoco.guru"},
             [
                 {"data": [{"id": "1", "attributes": {"url": "http://not-api-toto.toucantoco.guru"}}, {"id": "2", "attributes": {"url": "http://not.toucantoco.guru"} }],
                    "pagination": {"next": "https://betteruptime.com/api/v2/monitors?page=2"}},
@@ -46,17 +46,48 @@ def test_validate_require_if(module_args):
             ],
             2, None,
             id="Monitor not found - 2 pages"),
+        pytest.param(
+            {"url": "myinstance.com", "port": 22},
+            [{"data": [{"id": "1", "attributes": {"url": "myinstance.com", "port": 22}}], "pagination": {"next": None}}],
+            1, "1",
+            id="Monitor with port found"),
+        pytest.param(
+            {"url": "myinstance.com", "port": 22},
+            [
+                {"data": [
+                    {"id": "1", "attributes": {"url": "myinstance.com", "port": 440}},
+                    {"id": "2", "attributes": {"url": "myinstance.com", "port": 22}}
+                         ],
+                "pagination": {"next": None}}
+            ],
+            1, "2",
+            id="Monitor with port found among two"),
+        pytest.param(
+            {"url": "myinstance.com", "port": 22},
+            [{"data": [{"id": "1", "attributes": {"url": "myinstance.com", "port": 440}}], "pagination": {"next": None}}],
+            1, None,
+            id="Monitor with port not found among one witt port"),
+        pytest.param(
+            {"url": "myinstance.com", "port": 22},
+            [{"data": [{"id": "1", "attributes": {"url": "myinstance.com"}}], "pagination": {"next": None}}],
+            1, None,
+            id="Monitor with port not found among one without port"),
+        pytest.param(
+            {"url": "myinstance.com"},
+            [{"data": [{"id": "1", "attributes": {"url": "myinstance.com", "port": 22}}], "pagination": {"next": None}}],
+            1, None,
+            id="Monitor not found among one with port"),
     ]
 )
 @mock.patch('requests.get')
 @mock.patch('plugins.modules.betteruptime_monitor.AnsibleModule')
-def test_retrieve_id(mock_module, mock_requests_get, searched_url, api_response, expected_nb_call_api, expected_monitor_id):
+def test_retrieve_id(mock_module, mock_requests_get, params, api_response, expected_nb_call_api, expected_monitor_id):
     response = mock.Mock()
     response.json.side_effect = api_response
     mock_requests_get.return_value = response
 
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
-    monitor_object.payload["url"] = searched_url
+    monitor_object.payload = params
 
     monitor_object.retrieve_id(betteruptime_monitor.API_MONITORS_BASE_URL)
 
