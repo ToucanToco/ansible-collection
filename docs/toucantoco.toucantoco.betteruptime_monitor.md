@@ -15,7 +15,7 @@ Manage BetterUptime monitors
 | request_headers           | False                 | listelements     | dict                                                                             |                |
 | domain_expiration         | False                 | int              |                                                                                  |                |
 | ssl_expiration            | False                 | int              |                                                                                  |                |
-| policy_id                 | False                 | str              |                                                                                  |                |
+| policy_name               | False                 | str              |                                                                                  |                |
 | follow_redirects          | False                 | bool             |                                                                                  |                |
 | required_keyword          | False                 | str              |                                                                                  |                |
 | call                      | False                 | bool             | False                                                                            |                |
