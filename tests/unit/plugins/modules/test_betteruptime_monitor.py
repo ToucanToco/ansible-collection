@@ -1,8 +1,8 @@
 import mock
 import pytest
-
-from plugins.modules import betteruptime_monitor
 from ansible.module_utils.common.validation import check_required_if
+from plugins.modules import betteruptime_monitor
+
 
 @pytest.mark.parametrize("module_args", [
         pytest.param({"monitor_type": "tcp"}, id="TCP without port"),
@@ -154,6 +154,7 @@ def test_diff_attributes(mock_module, retrieved_attributes, initial_payload, exp
 def test_manage_monitor_create(mock_module, mock_create, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
     monitor_object.state          = "present"
+    monitor_object.policy_name    = None
     monitor_object.payload["url"] = "https://myurlToMonitor.com"
 
     monitor_object.manage_monitor()
@@ -166,6 +167,7 @@ def test_manage_monitor_create(mock_module, mock_create, mock_retrieve_id):
 def test_manage_monitor_update(mock_module, mock_update, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
     monitor_object.state          = "present"
+    monitor_object.policy_name    = None
     monitor_object.payload["url"] = "https://myurlToMonitor.com"
     monitor_object.id             = "1234"
 
@@ -179,6 +181,7 @@ def test_manage_monitor_update(mock_module, mock_update, mock_retrieve_id):
 def test_manage_monitor_delete(mock_module, mock_delete, mock_retrieve_id):
     monitor_object = betteruptime_monitor.BetterUptimeMonitor(mock_module)
     monitor_object.state          = "absent"
+    monitor_object.policy_name    = None
     monitor_object.payload["url"] = "https://myurlToMonitor.com"
     monitor_object.id             = "1234"
 
