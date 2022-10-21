@@ -10,6 +10,10 @@ from ..module_utils.flagsmith import get_project_ids_from_names, get_tag_ids_fro
 
 import collections
 
+import ast
+
+import json
+
 TAG_FIELDS = {
     "api_key":         {"required": True, "type": "str", "no_log": True},
     "base_url":        {"required": True, "type": "str"},
@@ -38,6 +42,15 @@ class FlagsmithFeature:
         self.retrieved_attributes = None
 
         self.payload = sanitize_payload(self.payload)
+
+        if 'initial_value' in self.payload:
+            # Transform to a valid json string if initial_value is a dict
+            try:
+                typed_initial_value = ast.literal_eval(self.payload['initial_value'])
+                if type(typed_initial_value) is dict:
+                    self.payload['initial_value'] = json.dumps(typed_initial_value)
+            except ValueError:
+                pass
 
     def retrieve_id(self, api_url):
         """ Retrieve the id of a feature if it exists """
