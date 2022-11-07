@@ -6,12 +6,15 @@ This Ansible collection includes a variety of Ansible content to help automate t
 
 ### Modules
 
-| Name                                                   | Description                                      |
-|--------------------------------------------------------|--------------------------------------------------|
-| toucantoco.toucantoco.betteruptime_monitor             | Create & manage betteruptime monitors            |
-| toucantoco.toucantoco.betteruptime_monitor_sla         | Retrieve SLA of monitors                         |
-| toucantoco.toucantoco.betteruptime_status_page         | Create & manage betteruptime status pages        |
-| toucantoco.toucantoco.betteruptime_status_page_report  | Create & manage betteruptime status page reports |
+| Name                                                     | Description                                        |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| toucantoco.toucantoco.betteruptime_monitor               | Create & manage betteruptime monitors              |
+| toucantoco.toucantoco.betteruptime_monitor_sla           | Retrieve SLA of monitors                           |
+| toucantoco.toucantoco.betteruptime_status_page           | Create & manage betteruptime status pages          |
+| toucantoco.toucantoco.betteruptime_status_page_report    | Create & manage betteruptime status page reports   |
+| toucantoco.toucantoco.flagsmith_feature                  | Create & manage Flagsmith features                 |
+| toucantoco.toucantoco.flagsmith_tag                      | Create & manage Flagsmith tags                     |
+
 
 ### Installing this collection
 
