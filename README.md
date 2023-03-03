@@ -14,6 +14,7 @@ This Ansible collection includes a variety of Ansible content to help automate t
 | toucantoco.toucantoco.betteruptime_status_page_report    | Create & manage betteruptime status page reports   |
 | toucantoco.toucantoco.flagsmith_feature                  | Create & manage Flagsmith features                 |
 | toucantoco.toucantoco.flagsmith_tag                      | Create & manage Flagsmith tags                     |
+| toucantoco.toucantoco.flagsmith_user_group               | Create & manage Flagsmith user groups              |
 
 
 ### Installing this collection
