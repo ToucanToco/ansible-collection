@@ -248,7 +248,7 @@ class FlagsmithUserGroup:
 
     def manage(self):
         """ Manage state of a user_group """
-        organisation_ids = get_organisation_ids_from_names(self.base_url, self.headers, [self.organisation_name])
+        organisation_ids = get_organisation_ids_from_names(f"{self.base_url}/organisations/", self.headers, [self.organisation_name])
 
         if len(organisation_ids) == 0:
             self.module.fail_json(msg="Organisation was not found")

@@ -1,8 +1,39 @@
 import pytest
 import mock
 
-from plugins.module_utils.flagsmith import get_project_ids_from_names, get_tag_ids_from_labels, get_organisation_ids_from_names
+from plugins.module_utils.flagsmith import get_project_ids_from_names, get_tag_ids_from_labels, get_organisation_ids_from_names, get_all_project_environment_ids
 
+
+@pytest.mark.parametrize(
+        "api_response, expected",
+        [
+            pytest.param(
+                [{"next": None, "results": []}],
+                [],
+                id="Empty"),
+            pytest.param(
+                [{"next": None, "results": []}],
+                [],
+                id="Unexisting organisation"),
+            pytest.param(
+                [{"next": None, "results": [{"name": "myEnv", "id": 4}]}],
+                [4],
+                id="Existing environment"),
+            pytest.param(
+                [{"next": "NotNone", "results": [{"name": "notMyEnv", "id": 45}]}, {"next": None, "results": [{"name": "myEnv", "id": 4}]}],
+                [45, 4],
+                id="Existing environment on page two"),
+        ]
+)
+@mock.patch('requests.get')
+def test_get_all_project_environment_ids(mock_requests_get, api_response, expected):
+    response = mock.Mock()
+    response.status_code = 200
+    response.json.side_effect = api_response
+    mock_requests_get.return_value = response
+
+    res = get_all_project_environment_ids("dummy", {})
+    assert res == expected
 
 @pytest.mark.parametrize(
         "organization_name, api_response, expected",

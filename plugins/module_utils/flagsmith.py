@@ -1,9 +1,24 @@
 import requests
 
 
-def get_organisation_ids_from_names(base_url: str, headers: dict, organisation_names: list) -> list:
+def get_all_project_environment_ids(url: str, headers: dict) -> list:
+    """ Return the ids of all environments"""
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return []
+
+    json_object = response.json()
+
+    ids = [i['id'] for i in json_object['results']]
+    if json_object['next'] is not None:
+        ids = ids + get_all_project_environment_ids(json_object['next'], headers)
+
+    return ids
+
+
+def get_organisation_ids_from_names(url: str, headers: dict, organisation_names: list) -> list:
     """ Return the ids of the matching organisations"""
-    response = requests.get(f"{base_url}/organisations/", headers=headers)
+    response = requests.get(url, headers=headers)
     if response.status_code != 200:
         return []
     json_object = response.json()
@@ -12,21 +27,6 @@ def get_organisation_ids_from_names(base_url: str, headers: dict, organisation_n
 
     if len(ids) != len(organisation_names) and json_object['next'] is not None:
         ids = ids + get_organisation_ids_from_names(json_object['next'], headers, organisation_names)
-
-    return ids
-
-
-def get_user_groups_ids_from_names(base_url: str, headers: dict, organisation_id: int, user_group_names: list) -> list:
-    """ Return the ids of the matching user_groups"""
-    response = requests.get(f"{base_url}/organisations/{organisation_id}/groups/", headers=headers)
-    if response.status_code != 200:
-        return []
-    json_object = response.json()
-
-    ids = [i['id'] for i in json_object['results'] if i['name'] in user_group_names]
-
-    if len(ids) != len(user_group_names) and json_object['next'] is not None:
-        ids = ids + get_user_groups_ids_from_names(json_object['next'], headers, organisation_id, user_group_names)
 
     return ids
 

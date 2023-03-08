@@ -71,6 +71,7 @@ def test_manage_create(mock_module, mock_create, mock_retrieve_id, mock_get_orga
     user_group_object                 = flagsmith_user_group.FlagsmithUserGroup(mock_module)
     user_group_object.state           = "present"
     user_group_object.payload["name"] = "production"
+    user_group_object.permissions     = None
 
     user_group_object.manage()
 
@@ -85,6 +86,7 @@ def test_manage_update(mock_module, mock_update, mock_retrieve_id, mock_get_orga
     user_group_object.state           = "present"
     user_group_object.payload["name"] = "production"
     user_group_object.id              = "1234"
+    user_group_object.permissions     = None
 
     user_group_object.manage()
 
