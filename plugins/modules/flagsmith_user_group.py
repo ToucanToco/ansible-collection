@@ -6,7 +6,7 @@ import requests
 from ansible.module_utils.basic import AnsibleModule
 
 from ..module_utils.payload import sanitize_payload
-from ..module_utils.flagsmith import get_organisation_ids_from_names
+from ..module_utils.flagsmith import get_organisation_ids_from_names, get_project_ids_from_names
 
 ORGANISATION_PERMISSIONS_FIELDS = {
     "permissions": {"required": False, "type": "list", "elements": "str"},
@@ -18,7 +18,7 @@ PROJECT_PERMISSIONS_FIELDS = {
 
 PERMISSIONS_FIELDS = {
     "organisation": {"required": False, "type": "dict", "options": ORGANISATION_PERMISSIONS_FIELDS},
-    "projects":      {"required": False, "type": "dict", "options": PROJECT_PERMISSIONS_FIELDS},
+    "projects":     {"required": False, "type": "list", "options": PROJECT_PERMISSIONS_FIELDS},
 }
 
 USER_GROUP_FIELDS = {
@@ -43,6 +43,7 @@ class FlagsmithOrganisationPermissions:
         self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.retrieved_attributes = None
+        self.changed              = False
 
     def diff_attributes(self):
         """ Update the payload to only have the diff between the wanted and the existing attributes """
@@ -58,7 +59,7 @@ class FlagsmithOrganisationPermissions:
         data={**self.payload, "group": self.group_id}
         resp = requests.post(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/", headers=self.headers, json=data)
         if resp.status_code == HTTPStatus.CREATED:
-            return True
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
@@ -66,18 +67,18 @@ class FlagsmithOrganisationPermissions:
         """ Update an existing user_group org permissions"""
         self.diff_attributes()
         if not self.payload:
-            self.module.exit_json(changed=False)
+            return
 
         resp = requests.patch(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/{self.id}/", headers=self.headers, json={**self.payload, "group": self.group_id})
 
         if resp.status_code == HTTPStatus.OK:
-            self.module.exit_json(changed=True)
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
     def retrieve_id(self):
         """ Retrieve the id of the user_group org permissions if it exists """
-        response = requests.get(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions?group={self.group_id}", headers=self.headers)
+        response = requests.get(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/?group={self.group_id}", headers=self.headers)
         json_object = response.json()
 
         if len(json_object) != 0 and type(json_object) is list:
@@ -96,7 +97,10 @@ class FlagsmithOrganisationPermissions:
         else:
             self.update()
 
-class FlagsmithPermissions:
+        return self.changed
+
+
+class FlagsmithProjectPermissions:
     def __init__(self, module, payload):
         self.module               = module
         self.payload              = payload
@@ -104,9 +108,11 @@ class FlagsmithPermissions:
         self.base_url             = self.payload.pop("base_url")
         self.organisation_id      = self.payload.pop("organisation_id")
         self.group_id             = self.payload.pop("group_id")
+        self.project_id             = self.payload.pop("project_id")
         self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.retrieved_attributes = None
+        self.changed              = False
 
     def diff_attributes(self):
         """ Update the payload to only have the diff between the wanted and the existing attributes """
@@ -118,40 +124,42 @@ class FlagsmithPermissions:
         self.payload = diff_attributes
 
     def create(self):
-        """ Create a new user_group org permissions"""
+        """ Create a new user_group project permissions"""
         data={**self.payload, "group": self.group_id}
-        resp = requests.post(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/", headers=self.headers, json=data)
+        resp = requests.post(f"{self.base_url}/projects/{self.project_id}/user-group-permissions/", headers=self.headers, json=data)
         if resp.status_code == HTTPStatus.CREATED:
-            return True
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
     def update(self):
-        """ Update an existing user_group org permissions"""
+        """ Update an existing user_group project permissions"""
         self.diff_attributes()
         if not self.payload:
-            self.module.exit_json(changed=False)
+            return
 
-        resp = requests.patch(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/{self.id}/", headers=self.headers, json={**self.payload, "group": self.group_id})
+        resp = requests.patch(f"{self.base_url}/projects/{self.project_id}/user-group-permissions/{self.id}/", headers=self.headers, json={**self.payload, "group": self.group_id})
 
         if resp.status_code == HTTPStatus.OK:
-            self.module.exit_json(changed=True)
+            self.changed = True
         else:
             self.module.fail_json(msg=resp.content)
 
     def retrieve_id(self):
-        """ Retrieve the id of the user_group org permissions if it exists """
-        response = requests.get(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions?group={self.group_id}", headers=self.headers)
+        """ Retrieve the id of the user_group project permissions if it exists """
+        response = requests.get(f"{self.base_url}/projects/{self.project_id}/user-group-permissions/", headers=self.headers)
         json_object = response.json()
 
-        if len(json_object) != 0 and type(json_object) is list:
-            self.id = json_object[0]['id']
+        user_group_permissions = [x for x in json_object if x['group']['id'] == self.group_id]
+        if len(user_group_permissions) != 0 and type(user_group_permissions) is list:
+            self.id = user_group_permissions[0]['id']
             self.retrieved_attributes = {
-                "permissions": json_object[0]['permissions'],
+                "permissions": user_group_permissions[0]['permissions'],
+                "admin":       user_group_permissions[0]['admin'],
             }
 
     def manage(self):
-        """ Manage the state of a the org permissions """
+        """ Manage the state of project permissions """
 
         self.retrieve_id()
 
@@ -159,6 +167,8 @@ class FlagsmithPermissions:
             self.create()
         else:
             self.update()
+
+        return self.changed
 
 
 class FlagsmithUserGroup:
@@ -254,6 +264,7 @@ class FlagsmithUserGroup:
                 self.update()
 
             if self.permissions is not None:
+                #self.module.fail_json(msg=self.permissions["organisation"]["permissions"])
                 if self.permissions["organisation"] is not None:
                     organisation_permissions_payload = {
                         "api_key":         self.api_key,
@@ -263,7 +274,26 @@ class FlagsmithUserGroup:
                         "permissions":     [] if self.permissions["organisation"]["permissions"] is None else self.permissions["organisation"]["permissions"],
                     }
                     organisation_permissions = FlagsmithOrganisationPermissions(self.module, organisation_permissions_payload)
-                    organisation_permissions.manage()
+                    self.changed = organisation_permissions.manage() or self.changed
+
+                if self.permissions["projects"] is not None:
+                    for project in self.permissions["projects"]:
+                        project_ids = get_project_ids_from_names(self.base_url, self.headers, [project["name"]])
+
+                        if len(project_ids) == 0:
+                            self.module.fail_json(msg="Project was not found")
+
+                        project_permissions_payload = {
+                            "api_key":         self.api_key,
+                            "base_url":        self.base_url,
+                            "organisation_id": self.organisation_id,
+                            "group_id":        self.id,
+                            "project_id":      project_ids[0],
+                            "permissions":     [] if project["permissions"] is None else project["permissions"],
+                            "admin":           project["admin"],
+                        }
+                        project_permissions = FlagsmithProjectPermissions(self.module, project_permissions_payload)
+                        self.changed = project_permissions.manage() or self.changed
 
             self.module.exit_json(changed=self.changed)
 
