@@ -1,7 +1,7 @@
 import requests
 
 
-def get_all_project_environment_ids(url: str, headers: dict) -> list:
+def get_all_environment_keys(url: str, headers: dict) -> list:
     """ Return the ids of all environments"""
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
@@ -9,11 +9,11 @@ def get_all_project_environment_ids(url: str, headers: dict) -> list:
 
     json_object = response.json()
 
-    ids = [i['id'] for i in json_object['results']]
+    keys = [i['api_key'] for i in json_object['results']]
     if json_object['next'] is not None:
-        ids = ids + get_all_project_environment_ids(json_object['next'], headers)
+        keys = keys + get_all_environment_keys(json_object['next'], headers)
 
-    return ids
+    return keys
 
 
 def get_organisation_ids_from_names(url: str, headers: dict, organisation_names: list) -> list:

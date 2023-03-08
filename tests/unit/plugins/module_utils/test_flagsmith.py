@@ -1,7 +1,7 @@
 import pytest
 import mock
 
-from plugins.module_utils.flagsmith import get_project_ids_from_names, get_tag_ids_from_labels, get_organisation_ids_from_names, get_all_project_environment_ids
+from plugins.module_utils.flagsmith import get_project_ids_from_names, get_tag_ids_from_labels, get_organisation_ids_from_names, get_all_environment_keys
 
 
 @pytest.mark.parametrize(
@@ -16,23 +16,23 @@ from plugins.module_utils.flagsmith import get_project_ids_from_names, get_tag_i
                 [],
                 id="Unexisting organisation"),
             pytest.param(
-                [{"next": None, "results": [{"name": "myEnv", "id": 4}]}],
-                [4],
+                [{"next": None, "results": [{"name": "myEnv", "id": 4, "api_key": "myKey"}]}],
+                ["myKey"],
                 id="Existing environment"),
             pytest.param(
-                [{"next": "NotNone", "results": [{"name": "notMyEnv", "id": 45}]}, {"next": None, "results": [{"name": "myEnv", "id": 4}]}],
-                [45, 4],
+                [{"next": "NotNone", "results": [{"name": "notMyEnv", "id": 45, "api_key": "myKey1"}]}, {"next": None, "results": [{"name": "myEnv", "id": 4, "api_key": "myKey2"}]}],
+                ["myKey1", "myKey2"],
                 id="Existing environment on page two"),
         ]
 )
 @mock.patch('requests.get')
-def test_get_all_project_environment_ids(mock_requests_get, api_response, expected):
+def test_get_all_environment_keys(mock_requests_get, api_response, expected):
     response = mock.Mock()
     response.status_code = 200
     response.json.side_effect = api_response
     mock_requests_get.return_value = response
 
-    res = get_all_project_environment_ids("dummy", {})
+    res = get_all_environment_keys("dummy", {})
     assert res == expected
 
 @pytest.mark.parametrize(

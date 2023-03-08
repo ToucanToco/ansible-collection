@@ -6,13 +6,22 @@ import requests
 from ansible.module_utils.basic import AnsibleModule
 
 from ..module_utils.payload import sanitize_payload
-from ..module_utils.flagsmith import get_organisation_ids_from_names, get_project_ids_from_names
+from ..module_utils.flagsmith import get_organisation_ids_from_names, get_project_ids_from_names, get_all_environment_keys
 
-ORGANISATION_PERMISSIONS_FIELDS = {
+
+ENVIRONMENT_PERMISSIONS_FIELDS = {
     "permissions": {"required": False, "type": "list", "elements": "str"},
+    "admin":       {"required": False, "type": "bool"},
 }
 
 PROJECT_PERMISSIONS_FIELDS = {
+    "name":        {"required": True, "type": "str"},
+    "permissions": {"required": False, "type": "list", "elements": "str"},
+    "admin":       {"required": False, "type": "bool"},
+    "environments": {"required": False, "type": "list", "options": ENVIRONMENT_PERMISSIONS_FIELDS},
+}
+
+ORGANISATION_PERMISSIONS_FIELDS = {
     "permissions": {"required": False, "type": "list", "elements": "str"},
 }
 
@@ -171,6 +180,76 @@ class FlagsmithProjectPermissions:
         return self.changed
 
 
+class FlagsmithEnvironmentPermissions:
+    def __init__(self, module, payload):
+        self.module               = module
+        self.payload              = payload
+        self.api_key              = self.payload.pop("api_key")
+        self.base_url             = self.payload.pop("base_url")
+        self.group_id             = self.payload.pop("group_id")
+        self.environment_key      = self.payload.pop("environment_key")
+        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
+        self.id                   = None
+        self.retrieved_attributes = None
+        self.changed              = False
+
+    def diff_attributes(self):
+        """ Update the payload to only have the diff between the wanted and the existing attributes """
+        diff_attributes = {}
+        for key in self.payload:
+            if key not in self.retrieved_attributes or self.retrieved_attributes[key] != self.payload[key]:
+                diff_attributes[key] = self.payload[key]
+
+        self.payload = diff_attributes
+
+    def create(self):
+        """ Create a new user_group environment permissions"""
+        data={**self.payload, "group": self.group_id}
+        resp = requests.post(f"{self.base_url}/environments/{self.environment_key}/user-group-permissions/", headers=self.headers, json=data)
+        if resp.status_code == HTTPStatus.CREATED:
+            self.changed = True
+        else:
+            self.module.fail_json(msg=resp.content)
+
+    def update(self):
+        """ Update an existing user_group environment permissions"""
+        self.diff_attributes()
+        if not self.payload:
+            return
+
+        resp = requests.patch(f"{self.base_url}/environments/{self.environment_key}/user-group-permissions/{self.id}/", headers=self.headers, json={**self.payload, "group": self.group_id})
+
+        if resp.status_code == HTTPStatus.OK:
+            self.changed = True
+        else:
+            self.module.fail_json(msg=resp.content)
+
+    def retrieve_id(self):
+        """ Retrieve the id of the user_group environment permissions if it exists """
+        response = requests.get(f"{self.base_url}/environments/{self.environment_key}/user-group-permissions/", headers=self.headers)
+        json_object = response.json()
+
+        user_group_permissions = [x for x in json_object if x['group']['id'] == self.group_id]
+        if len(user_group_permissions) != 0 and type(user_group_permissions) is list:
+            self.id = user_group_permissions[0]['id']
+            self.retrieved_attributes = {
+                "permissions": user_group_permissions[0]['permissions'],
+                "admin":       user_group_permissions[0]['admin'],
+            }
+
+    def manage(self):
+        """ Manage the state of environment permissions """
+
+        self.retrieve_id()
+
+        if not self.id:
+            self.create()
+        else:
+            self.update()
+
+        return self.changed
+
+
 class FlagsmithUserGroup:
     def __init__(self, module):
         self.module               = module
@@ -294,6 +373,21 @@ class FlagsmithUserGroup:
                         }
                         project_permissions = FlagsmithProjectPermissions(self.module, project_permissions_payload)
                         self.changed = project_permissions.manage() or self.changed
+
+                        if project["environments"] is not None:
+                            environments_keys = get_all_environment_keys(f"{self.base_url}/environments/?project={project_ids[0]}", self.headers)
+                            for environments_key in environments_keys:
+                                environment_permissions_payload = {
+                                    "api_key":         self.api_key,
+                                    "base_url":        self.base_url,
+                                    "group_id":        self.id,
+                                    "environment_key": environments_key,
+                                    "permissions":     [] if project["environments"]["permissions"] is None else project["environments"]["permissions"],
+                                    "admin":           project["environments"]["admin"],
+                                }
+
+                                environment_permissions = FlagsmithEnvironmentPermissions(self.module, environment_permissions_payload)
+                                self.changed = environment_permissions.manage() or self.changed
 
             self.module.exit_json(changed=self.changed)
 
