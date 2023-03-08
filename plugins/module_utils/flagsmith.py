@@ -2,7 +2,7 @@ import requests
 
 
 def get_all_environment_keys(url: str, headers: dict) -> list:
-    """ Return the ids of all environments"""
+    """ Return the keys of all environments"""
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         return []

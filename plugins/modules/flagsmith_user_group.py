@@ -65,7 +65,7 @@ class FlagsmithOrganisationPermissions:
 
     def create(self):
         """ Create a new user_group org permissions"""
-        data={**self.payload, "group": self.group_id}
+        data = {**self.payload, "group": self.group_id}
         resp = requests.post(f"{self.base_url}/organisations/{self.organisation_id}/user-group-permissions/", headers=self.headers, json=data)
         if resp.status_code == HTTPStatus.CREATED:
             self.changed = True
@@ -98,7 +98,6 @@ class FlagsmithOrganisationPermissions:
 
     def manage(self):
         """ Manage the state of a the org permissions """
-
         self.retrieve_id()
 
         if not self.id:
@@ -134,7 +133,7 @@ class FlagsmithProjectPermissions:
 
     def create(self):
         """ Create a new user_group project permissions"""
-        data={**self.payload, "group": self.group_id}
+        data = {**self.payload, "group": self.group_id}
         resp = requests.post(f"{self.base_url}/projects/{self.project_id}/user-group-permissions/", headers=self.headers, json=data)
         if resp.status_code == HTTPStatus.CREATED:
             self.changed = True
@@ -169,7 +168,6 @@ class FlagsmithProjectPermissions:
 
     def manage(self):
         """ Manage the state of project permissions """
-
         self.retrieve_id()
 
         if not self.id:
@@ -204,7 +202,7 @@ class FlagsmithEnvironmentPermissions:
 
     def create(self):
         """ Create a new user_group environment permissions"""
-        data={**self.payload, "group": self.group_id}
+        data = {**self.payload, "group": self.group_id}
         resp = requests.post(f"{self.base_url}/environments/{self.environment_key}/user-group-permissions/", headers=self.headers, json=data)
         if resp.status_code == HTTPStatus.CREATED:
             self.changed = True
@@ -239,7 +237,6 @@ class FlagsmithEnvironmentPermissions:
 
     def manage(self):
         """ Manage the state of environment permissions """
-
         self.retrieve_id()
 
         if not self.id:
