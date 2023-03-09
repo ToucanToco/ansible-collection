@@ -340,7 +340,6 @@ class FlagsmithUserGroup:
                 self.update()
 
             if self.permissions is not None:
-                #self.module.fail_json(msg=self.permissions["organisation"]["permissions"])
                 if self.permissions["organisation"] is not None:
                     organisation_permissions_payload = {
                         "api_key":         self.api_key,
