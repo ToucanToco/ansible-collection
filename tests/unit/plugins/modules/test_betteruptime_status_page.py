@@ -99,10 +99,11 @@ def test_manage_sections(mock_module, mock_betteruptime_page_create, mock_better
     assert mock_betteruptime_page_create.call_count == expected_create
     assert mock_betteruptime_page_delete.call_count == expected_delete
 
+
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.create')
 @mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_manage_status_page_create(mock_module, mock_create, mock_retrieve_id):
+def test_manage_status_page_create(mock_module, mock_create, _):
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.state = "present"
     status_page_object.sections = None
@@ -111,10 +112,11 @@ def test_manage_status_page_create(mock_module, mock_create, mock_retrieve_id):
 
     assert mock_create.call_count == 1
 
+
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.update')
 @mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_manage_status_page_update(mock_module, mock_update, mock_retrieve_id):
+def test_manage_status_page_update(mock_module, mock_update, _):
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.state = "present"
     status_page_object.id = "1234"
@@ -124,10 +126,11 @@ def test_manage_status_page_update(mock_module, mock_update, mock_retrieve_id):
 
     assert mock_update.call_count == 1
 
+
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.retrieve_id')
 @mock.patch('plugins.modules.betteruptime_status_page.BetterUptimeStatusPage.delete')
 @mock.patch('plugins.modules.betteruptime_status_page.AnsibleModule')
-def test_manage_status_page_delete(mock_module, mock_delete, mock_retrieve_id):
+def test_manage_status_page_delete(mock_module, mock_delete, _):
     status_page_object = betteruptime_status_page.BetterUptimeStatusPage(mock_module)
     status_page_object.state = "absent"
     status_page_object.id = "1234"
