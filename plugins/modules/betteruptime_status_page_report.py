@@ -169,7 +169,12 @@ class BetterUptimeStatusPageReport:
                 b = BetterUptimeStatusPageReportUpdates(self.module, self.status_page_id, self.id, self.headers, i)
                 b.create()
 
-        self.module.exit_json(changed=True)
+        result = dict(
+            changed=True,
+            status_page_id=self.status_page_id
+        )
+
+        self.module.exit_json(**result)
 
 
 def main():

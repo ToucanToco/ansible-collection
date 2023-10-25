@@ -32,6 +32,7 @@ STATUS_PAGES_FIELDS = {
     "state":                         {"required": True, "type": "str", "choices": ["present", "absent"]},
     "subdomain":                     {"required": True, "type": "str"},
     "scope":                         {"required": True, "type": "str"},
+    "id":                            {"required": False, "type": "str"},
     "sections":                      {"required": False, "type": "list", "elements": "dict", "options": STATUS_PAGES_SECTION_FIELDS},
     "company_name":                  {"required": False, "type": "str"},
     "company_url":                   {"required": False, "type": "str"},
@@ -169,7 +170,11 @@ class BetterUptimeStatusPage:
         self.scope    = self.payload.pop("scope")
         self.headers  = {"Authorization": f"Bearer {self.payload.pop('api_key')}"}
 
-        self.id                   = None
+        if "id" in self.payload and self.payload["id"] != "":
+            self.id = self.payload.pop("id")
+        else:
+            self.id = None
+
         self.retrieved_attributes = None
 
         self.sectionList  = []
@@ -272,7 +277,9 @@ class BetterUptimeStatusPage:
 
     def manage_status_page(self):
         """ Manage state of a status page """
-        self.retrieve_id(API_STATUS_PAGES_BASE_URL)
+
+        if self.id is None:
+            self.retrieve_id(API_STATUS_PAGES_BASE_URL)
 
         if self.state == "present":
             if not self.id:
