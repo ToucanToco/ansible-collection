@@ -9,7 +9,7 @@ ANSIBLE_COLLECTION_VERSION=`cat galaxy.yml | grep -oP 'version: \K(\d.\d.\d)$$'`
 
 BUILD_PATH="build"
 
-DOCKER_BUILD_IMAGE="python:3.10.5-alpine3.16"
+DOCKER_BUILD_IMAGE="python:3.11.6-alpine3.18"
 DOCKER_CMD=docker run --rm -v `pwd`:/data --workdir /data ${DOCKER_BUILD_IMAGE} sh -c
 
 build: set-env
