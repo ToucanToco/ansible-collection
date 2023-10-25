@@ -10,6 +10,7 @@ Manage BetterUptime status pages
 | state                           | True       | str    | present/absent    |             |
 | subdomain                       | True       | str    |                   |             |
 | scope                           | True       | str    |                   |             |
+| id                              | False      | str    |                   |             |
 | sections                        | False      | list   |                   | See below   |
 | company_name                    | False      | str    |                   |             |
 | company_url                     | False      | str    |                   |             |
