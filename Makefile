@@ -19,7 +19,7 @@ clean:
 	@rm -rf ${BUILD_PATH}
 
 docker-build:
-	@${DOCKER_CMD} "python -m pip install -r ${DEPLOY_REQ_FILE} && ln -s /usr/local/bin/python /usr/bin/python3 && ansible-galaxy collection build --force --output-path ${BUILD_PATH} && chown -R `id -u`:`id -g` ${BUILD_PATH}"
+	@${DOCKER_CMD} "python -m pip install -r ${DEPLOY_REQ_FILE} && ansible-galaxy collection build --force --output-path ${BUILD_PATH} && chown -R `id -u`:`id -g` ${BUILD_PATH}"
 
 docker-test:
 	@${DOCKER_CMD} "python -m pip install -r ${DEPLOY_REQ_FILE} && PYTHONPATH="${PYTHONPATH}:${pwd}" pytest"

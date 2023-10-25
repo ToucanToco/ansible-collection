@@ -17,3 +17,12 @@ license:
 dependencies: {}
 
 repository: https://github.com/ToucanToco/ansible-collection
+
+build_ignore:
+  - .ansible-venv*
+  - scripts
+  - .pytest_cache
+  - .gitignore
+  - Jenkinsfile
+  - build
+  - tests
