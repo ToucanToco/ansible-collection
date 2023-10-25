@@ -247,6 +247,15 @@ class BetterUptimeStatusPage:
             resource.delete()
             self.changed = True
 
+    def get(self):
+        """ Get a status page from the id """
+        resp = requests.get(f"{API_STATUS_PAGES_BASE_URL}/{self.id}", headers=self.headers)
+        if resp.status_code == HTTPStatus.OK:
+            json_object = resp.json()
+            self.retrieved_attributes = json_object["data"]["attributes"]
+        else:
+            self.module.fail_json(msg=resp.content)
+
     def create(self):
         """ Create a new status page """
         resp = requests.post(API_STATUS_PAGES_BASE_URL, headers=self.headers, json=self.payload)
@@ -280,6 +289,8 @@ class BetterUptimeStatusPage:
 
         if self.id is None:
             self.retrieve_id(API_STATUS_PAGES_BASE_URL)
+        else:
+            self.get()
 
         if self.state == "present":
             if not self.id:
@@ -297,7 +308,7 @@ class BetterUptimeStatusPage:
             else:
                 self.delete()
 
-        self.module.exit_json(changed=self.changed)
+        self.module.exit_json(changed=self.changed, id=self.id)
 
 
 def main():
