@@ -62,6 +62,8 @@ MONITOR_FIELDS = {
     "maintenance_to":        {"required": False, "type": "str"},
     "maintenance_timezone":  {"required": False, "type": "str"},
     "remember_cookies":      {"required": False, "type": "bool"},
+    "checks_version":        {"required": False, "type": "str"},
+    "ip_version":            {"required": False, "type": "str"},
 }
 
 MONITOR_REQUIRED_IF = [

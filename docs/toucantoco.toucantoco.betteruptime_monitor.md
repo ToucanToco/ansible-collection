@@ -41,3 +41,5 @@ Manage BetterUptime monitors
 | maintenance_to            | False                 | str              |                                                                                  |                |
 | maintenance_timezone      | False                 | str              |                                                                                  |                |
 | remember_cookies          | False                 | bool             |                                                                                  |                |
+| checks_version            | False                 | str              |                                                                                  |                |
+| ip_version                | False                 | str              |                                                                                  |                |
