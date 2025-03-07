@@ -6,7 +6,7 @@ import requests
 from ansible.module_utils.basic import AnsibleModule
 
 from ..module_utils.payload import sanitize_payload
-from ..module_utils.flagsmith import get_project_ids_from_names
+# from ..module_utils.flagsmith import get_project_ids_from_names
 
 import random
 
@@ -28,7 +28,7 @@ class FlagsmithTag:
         self.base_url             = self.payload.pop("base_url")
         self.project_name         = self.payload.pop("project_name")
         self.state                = self.payload.pop("state")
-        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
+        self.headers              = {"Authorization": f"Api-Key {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.project_id           = None
         self.retrieved_attributes = None
@@ -93,9 +93,18 @@ class FlagsmithTag:
 
     def manage(self):
         """ Manage state of a tag """
+        def get_project_ids_from_names(base_url: str, headers: dict, projects_names: list) -> list:
+            """ Return the ids of the matching projects"""
+            response = requests.get(f"{base_url}/projects/", headers=headers)
+            # self.module.fail_json(msg=f"trying {base_url}/projects/ with {headers}")
+            if response.status_code != 200:
+                return []
+            json_object = response.json()
+            return [i['id'] for i in json_object if i['name'] in projects_names]
+
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
         if len(project_ids) == 0:
-            self.module.fail_json(msg="Project was not found")
+            self.module.fail_json(msg=f"project {self.project_name} not found")
         else:
             self.project_id = project_ids[0]
 
