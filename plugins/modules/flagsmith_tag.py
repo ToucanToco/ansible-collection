@@ -6,7 +6,7 @@ import requests
 from ansible.module_utils.basic import AnsibleModule
 
 from ..module_utils.payload import sanitize_payload
-# from ..module_utils.flagsmith import get_project_ids_from_names
+from ..module_utils.flagsmith import get_project_ids_from_names
 
 import random
 
@@ -93,14 +93,6 @@ class FlagsmithTag:
 
     def manage(self):
         """ Manage state of a tag """
-        def get_project_ids_from_names(base_url: str, headers: dict, projects_names: list) -> list:
-            """ Return the ids of the matching projects"""
-            response = requests.get(f"{base_url}/projects/", headers=headers)
-            # self.module.fail_json(msg=f"trying {base_url}/projects/ with {headers}")
-            if response.status_code != 200:
-                return []
-            json_object = response.json()
-            return [i['id'] for i in json_object if i['name'] in projects_names]
 
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
         if len(project_ids) == 0:
