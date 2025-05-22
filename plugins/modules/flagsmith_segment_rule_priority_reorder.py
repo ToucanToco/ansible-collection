@@ -108,7 +108,7 @@ class FlagsmithSegmentRulePriorityReorder:
                 matched_plans=[]
                 for feature_segment in feature_segments[:]:
                     feature_segment_id = feature_segment['segment']
-                    if feature_segment['segment'] in self.segments_config.keys():
+                    if feature_segment['segment'] in self.segments_config:
                         matched_plans.append({"priority": self.segments_config[feature_segment_id], "id": feature_segment['id'] })
                         feature_segments.remove(feature_segment)
                 post_data=[]
