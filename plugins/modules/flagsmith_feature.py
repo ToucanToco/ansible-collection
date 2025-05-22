@@ -14,7 +14,7 @@ import ast
 
 import json
 
-TAG_FIELDS = {
+FEATURE_FIELDS = {
     "api_key":         {"required": True, "type": "str", "no_log": True},
     "base_url":        {"required": True, "type": "str"},
     "state":           {"required": True, "choices": ["present", "absent"], "type": "str"},
@@ -36,7 +36,7 @@ class FlagsmithFeature:
         self.base_url             = self.payload.pop("base_url")
         self.project_name         = self.payload.pop("project_name")
         self.state                = self.payload.pop("state")
-        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
+        self.headers              = {"Authorization": f"Api-Key {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.project_id           = None
         self.retrieved_attributes = None
@@ -96,7 +96,7 @@ class FlagsmithFeature:
         if resp.status_code == HTTPStatus.CREATED:
             self.module.exit_json(changed=True)
         else:
-            self.module.fail_json(msg=resp.content)
+            self.module.fail_json(msg=f"URL: {self.base_url}/projects/{self.project_id}/features/ FAIL: {resp.content}")
 
     def update(self):
         """ Update an existing feature """
@@ -130,8 +130,7 @@ class FlagsmithFeature:
         else:
             self.project_id = project_ids[0]
 
-        self.retrieve_id(f"{self.base_url}/projects/{self.project_id}/features?search={self.payload['name']}")
-
+        self.retrieve_id(f"{self.base_url}/projects/{self.project_id}/features/?search={self.payload['name']}")
         if self.state == "present":
             if not self.id:
                 self.create()
@@ -146,7 +145,7 @@ class FlagsmithFeature:
 
 def main():
     module = AnsibleModule(
-      argument_spec=TAG_FIELDS,
+      argument_spec=FEATURE_FIELDS,
       supports_check_mode=True,
     )
 

@@ -28,7 +28,7 @@ class FlagsmithTag:
         self.base_url             = self.payload.pop("base_url")
         self.project_name         = self.payload.pop("project_name")
         self.state                = self.payload.pop("state")
-        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
+        self.headers              = {"Authorization": f"Api-Key {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.project_id           = None
         self.retrieved_attributes = None
@@ -93,9 +93,10 @@ class FlagsmithTag:
 
     def manage(self):
         """ Manage state of a tag """
+
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
         if len(project_ids) == 0:
-            self.module.fail_json(msg="Project was not found")
+            self.module.fail_json(msg=f"project {self.project_name} not found")
         else:
             self.project_id = project_ids[0]
 
