@@ -1,18 +1,14 @@
 #!/usr/bin/python
 
+import ast
+import json
 from http import HTTPStatus
 
 import requests
 from ansible.module_utils.basic import AnsibleModule
 
-from ..module_utils.payload import sanitize_payload
 from ..module_utils.flagsmith import get_project_ids_from_names
-
-import collections
-
-import ast
-
-import json
+from ..module_utils.payload import sanitize_payload
 
 SEGMENT_FIELDS = {
     "api_key":         {"required": True, "type": "str", "no_log": True},
@@ -42,7 +38,7 @@ class FlagsmithSegmentRule:
             # Transform to a valid json string if initial_value is a dict
             try:
                 typed_initial_value = ast.literal_eval(self.payload['initial_value'])
-                if type(typed_initial_value) is dict:
+                if isinstance(typed_initial_value, dict):
                     self.payload['initial_value'] = json.dumps(typed_initial_value)
             except ValueError:
                 pass
@@ -73,27 +69,27 @@ class FlagsmithSegmentRule:
             self.module.fail_json(msg=f"segment update failed. {rule_update_resp.status_code} {rule_update_resp.content} \n  Uri: {rule_update_resp.url} \n Sent payload: {self.payload}")
 
     def manage(self):
+        """ Manage state of a segment """
         self.payload["name"]=f"{self.payload['name'].lower()}"
         if self.payload['name']=="none" or self.payload["name"] == "custom":
             self.module.exit_json(skipped=True)
         self.payload['rules'] = self.payload['rules'].replace("'", '"')
         self.payload['rules'] = json.loads(self.payload['rules'])
-        
-        """ Manage state of a segment """
+
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
-        
+
         if len(project_ids) == 0:
             self.module.fail_json(msg=f"Project was not found, {project_ids}")
         else:
-            self.project = project_ids[0]
-            self.payload["project"] = self.project
-        self.retrieve_id(f"{self.base_url}/projects/{self.project}/segments/?search={self.payload['name']}")
-        
+            self.project_id = project_ids[0]
+            self.payload["project"] = self.project_id
+        self.retrieve_id(f"{self.base_url}/projects/{self.project_id}/segments/?search={self.payload['name']}")
+
         if self.state == "present" and self.id:
             self.update()
         else:
             self.module.fail_json(msg=f"Segment was not found, {self.payload['name']}")
-            
+
 
 def main():
     module = AnsibleModule(
