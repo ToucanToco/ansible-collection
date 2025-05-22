@@ -1,18 +1,15 @@
 #!/usr/bin/python
 
+import ast
+import json
 from http import HTTPStatus
+from operator import itemgetter
 
 import requests
 from ansible.module_utils.basic import AnsibleModule
-from operator import itemgetter
-from ..module_utils.payload import sanitize_payload
+
 from ..module_utils.flagsmith import get_project_ids_from_names
-
-import collections
-
-import ast
-
-import json
+from ..module_utils.payload import sanitize_payload
 
 SEGMENT_FIELDS = {
     "api_key":           {"required": True, "type": "str", "no_log": True},
@@ -82,7 +79,7 @@ class FlagsmithSegmentRulePriorityReorder:
 
     def manage(self):
 
-        # get project id 
+        # get project id
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
         if len(project_ids) == 0:
             self.module.fail_json(msg=f"Project was not found, {project_ids}")
@@ -99,15 +96,14 @@ class FlagsmithSegmentRulePriorityReorder:
             self.segments_config[segment_id]=segment["priority"]
             # retrieve features associated with segment
             for feature in self.retrieve_associated_features(segment_id):
-                if feature['environment'] in self.features_env_mapping.keys():
+                if feature['environment'] in self.features_env_mapping:
                     self.features_env_mapping[feature['environment']].append(feature)
 
-        
+
         # for each feature / env, get the overrides, then reorder based on pricing plan priority (total number of overrides - priority)
         for environment_id, features in self.features_env_mapping.items():
             for feature in features:
                 resp = requests.get(f"{self.base_url}/features/feature-segments/?environment={environment_id}&feature={feature['feature']}", headers=self.headers)
-                resp_object = resp.json()
                 feature_segments = resp.json()['results']
                 matched_plans=[]
                 for feature_segment in feature_segments[:]:
@@ -117,10 +113,10 @@ class FlagsmithSegmentRulePriorityReorder:
                         feature_segments.remove(feature_segment)
                 post_data=[]
                 for index, item in enumerate(feature_segments):
-                    post_data.append({"id":feature_segments[index]['id'], "priority": index})
+                    post_data.append({"id": item['id'], "priority": index})
                 post_data_length=len(post_data)
                 sorted_matched_plans = sorted(matched_plans, key=itemgetter('priority'))
-                
+
                 for sorted_matched_plans in matched_plans:
                     post_data.append({"id":sorted_matched_plans['id'], "priority": post_data_length+sorted_matched_plans['priority']})
                 update_request = requests.post(f"{self.base_url}/features/feature-segments/update-priorities/", json=post_data, headers=self.headers)
@@ -130,7 +126,7 @@ class FlagsmithSegmentRulePriorityReorder:
                 else:
                     self.module.fail_json(msg=f"Priority update failed. {update_request.status_code} {update_request.content} \n  Uri: {update_request.url} \n Sent payload: {post_data}")
 
-        self.module.exit_json(changed=True)         
+        self.module.exit_json(changed=True)
 
 def main():
     module = AnsibleModule(
