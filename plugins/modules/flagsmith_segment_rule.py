@@ -27,7 +27,7 @@ class FlagsmithSegmentRule:
         self.base_url             = self.payload.pop("base_url")
         self.project_name         = self.payload.pop("project_name")
         self.state                = self.payload.pop("state")
-        self.headers              = {"Authorization": f"Api-Key {self.api_key}", "Accept": "application/json"}
+        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.project_id           = None
         self.retrieved_attributes = None
@@ -61,7 +61,7 @@ class FlagsmithSegmentRule:
         # self.diff_attributes()
         if not self.payload:
             self.module.exit_json(changed=False)
-        rule_update_resp = requests.patch(f"{self.base_url}/projects/{self.project}/segments/{self.id}/", headers=self.headers, json=self.payload)
+        rule_update_resp = requests.patch(f"{self.base_url}/projects/{self.project_id}/segments/{self.id}/", headers=self.headers, json=self.payload)
 
         if rule_update_resp.status_code == HTTPStatus.OK:
             self.module.exit_json(changed=True)

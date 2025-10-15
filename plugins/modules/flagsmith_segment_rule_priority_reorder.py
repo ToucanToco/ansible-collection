@@ -30,7 +30,7 @@ class FlagsmithSegmentRulePriorityReorder:
         self.state                = self.payload.pop("state")
         self.environment_names     = self.payload.pop("environment_names")
         self.pricing_plans         = self.payload.pop("pricing_plans")
-        self.headers              = {"Authorization": f"Api-Key {self.api_key}", "Accept": "application/json"}
+        self.headers              = {"Authorization": f"Token {self.api_key}", "Accept": "application/json"}
         self.id                   = None
         self.project_id           = None
         self.retrieved_attributes = None
@@ -82,7 +82,7 @@ class FlagsmithSegmentRulePriorityReorder:
         # get project id
         project_ids = get_project_ids_from_names(self.base_url, self.headers, [self.project_name])
         if len(project_ids) == 0:
-            self.module.fail_json(msg=f"Project was not found, {project_ids}")
+            self.module.fail_json(msg=f"Project was not found, {self.project_name}")
         else:
             self.project_id = project_ids[0]
 
